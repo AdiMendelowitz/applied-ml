@@ -9,7 +9,7 @@ A from-scratch implementation of ViT-Tiny trained on CIFAR-10, achieving **86.70
 | Model | Test Accuracy | Parameters | Training Time |
 |---|---|---|---|
 | ViT-Tiny (this work) | **86.70%** | 5.36M | ~46 min (Kaggle T4, 100 epochs) |
-| ResNet-18 (baseline) | 93.43% | 11.2M | ~35 min (Kaggle T4, 100 epochs) |
+| ResNet-18 (baseline) | 93.43% | 11.2M | 50 epochs on a T4 GPU, time not recorded |
 
 The 6.7-point gap is consistent with published findings on ViT performance at small data scale. Dosovitskiy et al. (2021) showed that ViTs require substantially more data than CNNs to match their performance. CIFAR-10's 50,000 training images are well below that crossover point. ViT-Tiny achieves this result at 52% fewer parameters than ResNet-18.
 
@@ -101,7 +101,7 @@ ViTs lack the spatial inductive biases of CNNs (local connectivity, translation 
 
 The effect of aggressive augmentation is visible in the training curves: train accuracy oscillates heavily (20-80% per-epoch swings) while test accuracy rises smoothly from ~50% at epoch 10 to 86.70% at epoch 96. This is the expected signature of MixUp and CutMix: the model trains against mixed-label targets and is evaluated on clean images. The train metric is not meaningful as a convergence indicator; only the test curve is.
 
-ResNet training curves look fundamentally different: train and test accuracy track closely with no wild oscillation, train accuracy climbs above test accuracy smoothly producing the classic overfitting gap, and convergence completes around epoch 60-70. The visual difference reflects the architectural difference: ResNet trains stably with minimal augmentation; ViT requires heavy augmentation which makes the training metrics noisy.
+ResNet training curves look different. They are smooth between learning-rate steps, test accuracy jumps from 79.12% to 91.37% at the first step (epoch 20 to 21), and it is within 0.2 points of its best by epoch 40 of 50. Train accuracy pulls ahead to a 6-point gap by the final epoch. The visual difference reflects the architectural difference: ResNet trains stably with minimal augmentation; ViT requires heavy augmentation which makes the training metrics noisy.
 
 ---
 
@@ -171,11 +171,11 @@ Per-class, the story is more nuanced. The classes where ViT approaches ResNet (a
 
 ### Training dynamics
 
-ResNet training curves look fundamentally different from ViT's. Train and test accuracy track closely with no oscillation; the classic overfitting gap is smooth and gradual; convergence completes around epoch 60-70. This is a direct consequence of the difference in augmentation strategy: ResNet uses lightweight augmentation (random crop + horizontal flip) producing clean training signals, while ViT uses aggressive mixed augmentation that deliberately makes training targets noisy to prevent the model from overfitting on so few examples.
+ResNet training curves look different from ViT's. They are smooth between learning-rate steps, and the gap between train and test accuracy opens gradually to 6 points over the 50 epochs. This is a direct consequence of the difference in augmentation strategy: ResNet uses lightweight augmentation (random crop + horizontal flip) producing clean training signals, while ViT uses aggressive mixed augmentation that deliberately makes training targets noisy to prevent the model from overfitting on so few examples.
 
 ### Why attention is slower than convolution
 
-ViT is ~3x slower despite fewer parameters. The bottleneck is the attention operation.
+ViT-Tiny has fewer parameters than ResNet-18, yet its attention layers do more work per parameter. The ResNet-18 training time was not recorded, so no speed ratio is quoted here.
 
 Convolution complexity: O(k^2 x C_in x C_out x H x W), where k is kernel size. For ResNet with k=3, most compute is O(9 x C^2) per spatial position.
 
