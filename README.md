@@ -1,4 +1,4 @@
-# Applied Machine Learning Portfolio
+# Applied machine learning portfolio
 
 From-scratch PyTorch and NumPy implementations across computer vision, adversarial robustness and time-series forecasting, with measured benchmarks, tested components and documented failure modes.
 
@@ -11,6 +11,21 @@ From-scratch PyTorch and NumPy implementations across computer vision, adversari
 [Explore projects](#explore-projects) ·
 [Quickstart](#quickstart) ·
 [Testing](#testing-and-reproducibility)
+
+![Ten CIFAR-10 test images attacked with FGSM at four perturbation budgets](adversarial-ml-toolkit/experiments/results/fgsm_examples_by_eps.png)
+
+A ResNet-18 that scores 93.4% on clean CIFAR-10 falls to 35.9% under FGSM noise of 2/255 per pixel. The [adversarial toolkit](adversarial-ml-toolkit/) measures the attack and the defence.
+
+## Results at a glance
+
+| Area | Measured result | Details |
+| :--- | :--- | :--- |
+| Model compression | Static INT8 quantisation makes ResNet-18 3.95x smaller and 1.52x faster at accuracy parity | [Compression](#compression-smaller-does-not-always-mean-faster) |
+| Adversarial robustness | PGD adversarial training holds 47.24% accuracy under PGD-20, where the undefended model holds 0.00% | [Robustness](#adversarial-robustness-clean-accuracy-hides-vulnerability) |
+| Forecasting | PatchTST beats a linear baseline at horizon 336 (MSE 0.467 against 0.485) and loses to it at horizon 96 | [Forecasting](#forecasting-the-linear-baseline-remains-competitive) |
+| Medical imaging | A composed lesion pipeline scores 0.5219 balanced accuracy where its classifier alone scores 0.7457 | [Medical imaging](#medical-imaging-component-performance-differs-from-pipeline-performance) |
+
+Every figure above is repeated below with its dataset, metric and evaluation limits.
 
 ## What this repository demonstrates
 
@@ -208,8 +223,8 @@ The linear baseline (look-back 512) records MSE 0.389 and MAE 0.405 at horizon 9
 ### Install (Windows PowerShell)
 
 ```powershell
-git clone https://github.com/AdiMendelowitz/CV-RP.git
-cd CV-RP
+git clone https://github.com/AdiMendelowitz/applied-ml.git
+cd applied-ml
 
 python -m venv .venv
 .venv\Scripts\Activate.ps1
@@ -292,7 +307,7 @@ Code style is configured for flake8 with a 120-character line limit (`.flake8`),
 <summary>Directory overview</summary>
 
 ```text
-CV-RP/
+applied-ml/
 ├── computer-vision-foundations/        # From-scratch: classical CV, CNNs, ViT, SimCLR
 │   └── code/
 │       ├── classical_cv/               # NumPy-only: convolution, Sobel, Canny, geometric transforms
@@ -364,4 +379,4 @@ Papers behind the implementations:
 
 Adi Mendelowitz · [Blog](https://blog.adimendelowitz.dev/) · [LinkedIn](https://linkedin.com/in/adimendelowitz) · MIT licence ([license](license))
 
-For implementation issues or reproducibility questions, [open a repository issue](https://github.com/AdiMendelowitz/CV-RP/issues).
+For implementation issues or reproducibility questions, [open a repository issue](https://github.com/AdiMendelowitz/applied-ml/issues).

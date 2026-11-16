@@ -1,4 +1,4 @@
-# Time-Series Forecasting with Transformers
+# Time-series forecasting with transformers
 
 From-scratch PyTorch implementations of three transformer-based architectures for
 long-horizon multivariate forecasting, evaluated on the ETTh1 benchmark under the
@@ -7,9 +7,13 @@ standard chronological split used by Nie et al. (ICLR 2023) and Liu et al.
 `nn.Module` primitives alongside a linear baseline, with a shared dataset loader
 and a unit-test suite covering every model.
 
+At horizon 336 the from-scratch PatchTST records a test MSE of 0.467 against 0.485 for the linear baseline. At horizon 96 the linear baseline is ahead, 0.389 against 0.398.
+
+![Forecast against ground truth on the ETTh1 test split at horizon 336](results/plots/forecast_vs_truth_pred336.png)
+
 ---
 
-## Problem Setup
+## Problem setup
 
 Given a look-back window of `seq_len` timesteps across all variates, predict the
 next `pred_len` steps for all variates jointly. Performance is the element-wise
@@ -28,9 +32,9 @@ The chronological split matches the published protocol:
 
 | Split | Rows | Row indices |
 |-------|------|-------------|
-| Train | 8,640 | 0 – 8,639 |
-| Val | 2,880 | 8,640 – 11,519 |
-| Test | 2,880 | 11,520 – 14,399 |
+| Train | 8,640 | 0 - 8,639 |
+| Val | 2,880 | 8,640 - 11,519 |
+| Test | 2,880 | 11,520 - 14,399 |
 
 Normalisation is per-channel z-score, fitted on train rows only and applied to
 val and test. Measured on the train split, the seven variates have a mean
@@ -42,7 +46,7 @@ Source: `ETTh1.csv` from the ETDataset repository
 
 ---
 
-## Repository Structure
+## Repository structure
 
 ```
 time-series-forecasting/
@@ -148,7 +152,7 @@ single-seed under a fixed training budget.
 
 ---
 
-## Anomaly Detection
+## Anomaly detection
 
 `anomaly/detect.py` loads a trained PatchTST checkpoint and runs sliding-window
 one-step-ahead inference over the ETTh1 test split. The anomaly score at each

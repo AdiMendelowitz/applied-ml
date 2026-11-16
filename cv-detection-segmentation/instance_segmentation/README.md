@@ -1,7 +1,7 @@
-# Instance Segmentation, Detection, and Medical Imaging
+# Instance segmentation, detection, and medical imaging
 
-From-scratch implementations of core instance segmentation components -- RoI
-Align, Hungarian matching loss, and a convolutional mask head -- combined with
+From-scratch implementations of core instance segmentation components, RoI
+Align, Hungarian matching loss, and a convolutional mask head, combined with
 fine-tuned Mask R-CNN and EfficientNet models for end-to-end dermoscopic
 lesion analysis on the ISIC 2018 challenge.
 
@@ -53,7 +53,7 @@ mask head, and focal loss.
 Full experimental logs, per-class recall tables, training curves, and analysis
 are in `ISIC2018_results.md`.
 
-### Task 1: Lesion Segmentation (Mask R-CNN, ResNet-50-FPN)
+### Task 1: Lesion segmentation (Mask R-CNN, ResNet-50-FPN)
 
 Trained on ISIC 2018 Task 1 (`tschandl/isic2018-challenge-task1-data-segmentation`),
 2,594 images, 80/20 random split, 512 x 512 input, horizontal flip augmentation only.
@@ -64,7 +64,7 @@ Trained on ISIC 2018 Task 1 (`tschandl/isic2018-challenge-task1-data-segmentatio
 | This work (Run 5, best) | 0.7822 |
 | Estimated variance across runs | 0.780 +/- 0.003 |
 
-### Task 3: Disease Classification (EfficientNet-B0/B3)
+### Task 3: Disease classification (EfficientNet-B0/B3)
 
 Trained on HAM10000 (`kmader/skin-cancer-mnist-ham10000`), 7-class
 classification, lesion-level stratified 80/20 split on `lesion_id`, 224 x 224
@@ -82,7 +82,7 @@ All results are validation set estimates on a single random split. Run-to-run
 variance on identical configurations is approximately 2pp, driven by the
 stochastic lesion-level split rather than configuration sensitivity.
 
-### End-to-End Pipeline
+### End-to-end pipeline
 
 Mask R-CNN (Task 1 checkpoint) chained with EfficientNet-B0 Run 5 (Task 3
 checkpoint), evaluated on 50 HAM10000 validation images. Jaccard ground truth

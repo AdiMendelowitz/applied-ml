@@ -1,4 +1,4 @@
-# Adversarial ML Toolkit
+# Adversarial ML toolkit
 
 PyTorch implementations of gradient-based adversarial attacks and PGD adversarial training,
 with a tested evaluation pipeline for image classifiers on CIFAR-10.

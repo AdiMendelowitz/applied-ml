@@ -1,4 +1,4 @@
-# Efficient Architectures
+# Efficient architectures
 
 PyTorch implementations of EfficientNet and ConvNeXt, plus a receptive field
 analysis tool that compares theoretical and empirical RF across both architectures.
@@ -96,11 +96,11 @@ Input (C channels, H x W)
 Key differences from ResNet:
 - 7x7 depthwise convolution replaces 3x3 standard convolution (larger receptive field
   per parameter, matching the window size in Swin Transformer).
-- Layer Normalization replaces Batch Normalization (normalization per sample, not per
+- Layer Normalisation replaces Batch Normalisation (normalisation per sample, not per
   batch; implemented as LayerNorm2d by permuting to NHWC and back).
 - GELU replaces ReLU throughout.
 - Inverted bottleneck (expand-then-contract) replaces standard bottleneck.
-- Layer scale initializes residual branch outputs near zero to stabilize training.
+- Layer scale initialises residual branch outputs near zero to stabilise training.
 - Stochastic depth on the residual branch (drop_path_rate increases with depth).
 
 The stem uses a non-overlapping 4x4 stride-4 patchify convolution, matching ViT's
@@ -125,7 +125,7 @@ model = convnext_tiny(num_classes=1000)
 
 ---
 
-## Receptive Field Analysis
+## Receptive field analysis
 
 **Source:** `receptive_field_analysis.py`
 
@@ -159,14 +159,14 @@ EfficientNet's 3x3 depthwise layers.
 
 The empirical RF is measured via gradient attribution: for each hook point, a fresh
 input is constructed (seed 0, scaled by 0.1), a forward pass is run, the gradient is
-computed with respect to the activation at the center neuron, and the spatial extent of
+computed with respect to the activation at the centre neuron, and the spatial extent of
 non-negligible gradients (magnitude > peak * 1e-3) is measured as a bounding box.
 
-This gives the actual region that the center neuron responds to in practice, which is
+This gives the actual region that the centre neuron responds to in practice, which is
 typically smaller than the theoretical upper bound because early-layer gradients decay
-rapidly with distance from the center.
+rapidly with distance from the centre.
 
-### Running the Analysis
+### Running the analysis
 
 ```bash
 python "Advanced CV & Efficient Models/code/efficient_architectures/receptive_field_analysis.py"

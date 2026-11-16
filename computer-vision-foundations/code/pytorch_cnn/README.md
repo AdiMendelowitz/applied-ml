@@ -1,73 +1,38 @@
-# PyTorch CNN Implementations
+# ResNet-18 from scratch in PyTorch
 
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.7.1-red.svg)](https://pytorch.org/)
 
-Implementations of CNN architectures in PyTorch: from basic convolutional networks to deep residual learning (ResNet-18). Built from scratch with rigorous testing and verified against established benchmarks.
+ResNet-18 written from `nn.Module` primitives and trained from scratch on CIFAR-10, reaching **93.43% test accuracy** in 50 epochs. The folder also holds a small CNN for MNIST that mirrors the NumPy network in [`cnn_scratch/`](../cnn_scratch/README.md).
 
-## 🎯 Overview
+![Training and test curves for ResNet-18 on CIFAR-10](resnet_cifar10_training.png)
 
-This directory contains implementations of:
+## Results
 
-1. **Basic CNN** - Foundational convolutional neural network for MNIST
-2. **ResNet-18** - Deep residual learning with skip connections for CIFAR-10
+| Metric | Value | Source |
+|---|---:|---|
+| Best test accuracy | 93.43% (epoch 46) | `training_history.json` |
+| Test accuracy at the final epoch | 93.38% | `training_history.json` |
+| Training accuracy at the final epoch | 99.40% | `training_history.json` |
+| Test accuracy after epoch 1 | 35.93% | `training_history.json` |
+| Trainable parameters | 11,173,962 | `resnet.py` |
+| Epochs | 50 | `03_resnet_training.ipynb` |
 
-**Key achievements:**
-- ✅ ResNet-18: **93.43% test accuracy** on CIFAR-10 (matches published benchmarks)
-- ✅ Complete training pipeline with checkpointing and visualization
-- ✅ Verified correctness through shape assertions and gradient flow checks
-- ✅ Professional code quality: type hints, comprehensive documentation, modular design
+The gap between training and test accuracy at the final epoch is 6.0 points. Test accuracy moves by 0.05 points between the best epoch and the last one, so the reported figure does not depend on picking a lucky checkpoint.
 
-## 📁 Project Structure
+### Per-class accuracy
 
-```
-pytorch_cnn/
-├── cnn_pytotch.py                  # Basic CNN implementation (note: filename typo)
-├── resnet.py                       # ResNet-18 from scratch
-├── train_cifar.py                  # Training script for CIFAR-10
-├── compare_implementations.py      # CNN vs NumPy validation
-│
-├── 03_resnet_training.ipynb        # Interactive training notebook
-├── training_history.json           # Training metrics log
-│
-├── best_resnet18_cifar10.pth       # Best model checkpoint
-├── best_resnet18_cifar10.pth   # Backup checkpoint
-│
-├── cifar10_samples.png             # Dataset samples
-├── resnet_cifar10_training.png     # Training curves
-├── resnet_per_class.png            # Per-class accuracy
-├── resnet_predictions.png          # Sample predictions
-├── img.png
-│
-└── data/
-    └── cifar-10-batches-py/        # CIFAR-10 dataset (auto-downloaded)
-```
+![Per-class accuracy](resnet_per_class.png)
 
-## 🏗️ Architectures
+### Sample predictions
 
-### 1. Basic CNN (`cnn_pytorch.py`)
+![Sample predictions](resnet_predictions.png)
 
-Simple CNN designed for MNIST digit classification:
+## Architecture
 
-```
-Input (28×28×1) → Conv2d(1→8, 3×3) → ReLU → MaxPool(2×2) → 
-                  Conv2d(8→16, 3×3) → ReLU → MaxPool(2×2) → 
-                  Flatten → Linear(784→128) → ReLU → 
-                  Linear(128→10) → Output
-```
+### ResNet-18 (`resnet.py`)
 
-**Purpose:** Understand CNN fundamentals
-- Convolutional feature extraction
-- Pooling for spatial downsampling
-- Fully connected classifier
-
-**Parameters:** ~100K
-
----
-
-### 2. ResNet-18 (`resnet.py`)
-
-Implementation of ["Deep Residual Learning for Image Recognition"](https://arxiv.org/abs/1512.03385) (He et al., 2016).
+An implementation of [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385) (He et al., 2016). No `torchvision.models` code is used.
 
 ```
 Input (32×32×3) → Conv 3×3, stride 1 (no MaxPool) →
@@ -77,352 +42,79 @@ Input (32×32×3) → Conv 3×3, stride 1 (no MaxPool) →
                   [BasicBlock ×2] (512 channels) →
                   GlobalAvgPool → FC(512→10) → Output
 ```
-> **CIFAR-10 adaptation:** The first conv uses 3×3 (stride 1) with no
-> MaxPool, replacing the standard 7×7 (stride 2) + MaxPool used for
-> ImageNet 224×224 inputs. This preserves spatial resolution appropriate
-> for 32×32 images.
 
-**Key Components:**
+> [!NOTE]
+> The stem is adapted for CIFAR-10. The first convolution is 3×3 with stride 1 and no max-pool, in place of the 7×7 stride-2 convolution and max-pool used for 224×224 ImageNet inputs, which keeps spatial resolution on 32×32 images.
 
-**BasicBlock:**
-```python
-out = F(x) + x  # Skip connection
-where F(x) = Conv → BatchNorm → ReLU → Conv → BatchNorm
+Each `BasicBlock` computes `out = F(x) + x`, where `F` is Conv → BatchNorm → ReLU → Conv → BatchNorm. The shortcut is the identity when shapes match and a 1×1 convolution when the channel count or stride changes.
+
+The identity path is what lets the gradient reach early layers.
+
+```
+∂L/∂x = ∂L/∂y × (∂F/∂x + 1)
+      = ∂L/∂y × ∂F/∂x + ∂L/∂y
 ```
 
-**Skip Connections:**
-- **Identity shortcut:** When dimensions match (`out = F(x) + x`)
-- **Projection shortcut:** When dimensions change (1×1 conv to match)
+Even when `∂F/∂x` is close to zero, the second term carries the gradient through unchanged.
 
-**Why This Works:**
-- Solves vanishing gradient problem
-- Gradient flows directly through identity path: `∂L/∂x = ∂L/∂y + ∂L/∂y × ∂F/∂x`
-- Enables training at depths previously intractable — the paper demonstrates ResNets up to 152 layers
+### Basic CNN (`cnn_pytotch.py`)
 
-**Parameters:** ~11.2M (for 10 classes)
+A two-convolution network for MNIST with about 100K parameters, built to match the NumPy CNN layer for layer.
 
----
-
-## 📊 Results
-
-### ResNet-18 on CIFAR-10
-
-**Final Performance:**
-- **Test Accuracy: 93.43%**
-- Training Accuracy: 97.89%
-- Training Time: ~2-3 hours (GPU)
-- Parameters: 11,173,962
-
-**Per-Class Accuracy:**
-
-| Class | Accuracy | Notes |
-|-------|----------|-------|
-| Airplane | 94.2% | Strong performance |
-| Automobile | 96.8% | Best class |
-| Bird | 88.3% | Most challenging |
-| Cat | 87.1% | Confused with dog |
-| Deer | 93.5% | Good separation |
-| Dog | 89.4% | Confused with cat |
-| Frog | 95.7% | Strong performance |
-| Horse | 94.1% | Clear features |
-| Ship | 96.2% | Excellent |
-| Truck | 94.9% | Good distinction |
-
-**Overall:** 93.43% average across all classes
-
-### Training Dynamics
-
-**Convergence:**
-- Epoch 1: ~35-40% accuracy
-- Epoch 50: ~82-85% accuracy
-- Epoch 100: ~89-91% accuracy
-- Epoch 200: **93.43% accuracy**
-
-**Observations:**
-- Smooth convergence with cosine learning rate decay
-- No significant overfitting (train-test gap ~4-5%)
-- Best results achieved around epoch 180-200
-
----
-
-## 🚀 Usage
-
-### 1. Test Implementations
-
-**Basic CNN:**
-```bash
-python cnn_pytorch.py
+```
+Input (28×28×1) → Conv2d(1→8, 3×3) → ReLU → MaxPool(2×2) →
+                  Conv2d(8→16, 3×3) → ReLU → MaxPool(2×2) →
+                  Flatten → Linear(784→128) → ReLU →
+                  Linear(128→10) → Output
 ```
 
-**ResNet-18:**
+`compare_implementations.py` trains this network and the NumPy network on the same data and prints the differences in accuracy and loss.
+
+## Training configuration
+
+The 93.43% run is the notebook `03_resnet_training.ipynb`, with the settings below.
+
+| Setting | Value |
+|---|---|
+| Optimiser | SGD, momentum 0.9, weight decay 5e-4 |
+| Learning rate | 0.1, multiplied by 0.1 at epochs 20, 35 and 45 (`MultiStepLR`) |
+| Epochs | 50 |
+| Batch size | 128 |
+| Augmentation | Random crop (32, padding 4), random horizontal flip |
+
+The logged learning rate in `training_history.json` follows this schedule, ending at 0.0001.
+
+## Usage
+
+Shape and parameter checks for the two models:
+
 ```bash
 python resnet.py
+python cnn_pytotch.py
 ```
 
-Expected output:
-```
-ResNet-18 architecture test
-============================================================
-Total trainable parameters: 11,173,962
-✅ All tests passed! ResNet-18 implementation correct!
-```
-
-### 2. Train ResNet-18 on CIFAR-10
+A short CPU training run, which defaults to 10 epochs with the learning rate reduced at epochs 5 and 8:
 
 ```bash
 python train_cifar.py
 ```
 
-**Training configuration:**
-- Optimizer: SGD with momentum (0.9)
-- Learning rate: 0.1 with cosine decay
-- Batch size: 128
-- Epochs: 200
-- Augmentation: Random crop, horizontal flip
+The full 50-epoch run is in `03_resnet_training.ipynb`. Unit tests for ResNet-18 live in [`../tests/test_core.py`](../tests/test_core.py).
 
-**Output:**
-- Checkpoints saved to `best_resnet18_cifar10.pth`
-- Training history logged to `training_history.json`
-- Visualizations generated automatically
+## Files
 
-### 3. Interactive Training
+| File | Contents |
+|---|---|
+| `resnet.py` | `BasicBlock`, `_make_layer` and the `resnet18` factory |
+| `cnn_pytotch.py` | Basic CNN for MNIST and its training function |
+| `train_cifar.py` | CIFAR-10 training script with a `CONFIG` dict |
+| `compare_implementations.py` | NumPy CNN against the PyTorch CNN on the same data |
+| `03_resnet_training.ipynb` | The 50-epoch training run and its plots |
+| `training_history.json` | Loss, accuracy and learning rate for every epoch |
 
-Open the Jupyter notebook:
-```bash
-jupyter notebook 03_resnet_training.ipynb
-```
+## References
 
-Includes:
-- Step-by-step training walkthrough
-- Real-time visualization
-- Per-class accuracy analysis
-- Confusion matrix
-- Sample predictions
+- He, K., Zhang, X., Ren, S., & Sun, J. (2016). *Deep Residual Learning for Image Recognition.* CVPR 2016, pp. 770-778. [arXiv:1512.03385](https://arxiv.org/abs/1512.03385)
+- Ioffe, S., & Szegedy, C. (2015). *Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift.* ICML 2015, pp. 448-456. [arXiv:1502.03167](https://arxiv.org/abs/1502.03167)
 
----
-
-## 🔬 Implementation Details
-
-### Code Quality Features
-
-✅ **Type hints throughout**
-```python
-def forward(self, x: torch.Tensor) -> torch.Tensor:
-    ...
-```
-
-✅ **Comprehensive docstrings**
-```python
-"""
-BasicBlock for ResNet-18 and ResNet-34.
-
-Args:
-    in_channels: Number of input channels
-    out_channels: Number of output channels
-    stride: Stride for first convolution (1 or 2)
-"""
-```
-
-✅ **Shape tracking**
-```python
-x = self.conv1(x)    # (batch, 64, 112, 112)
-x = self.maxpool(x)  # (batch, 64, 56, 56)
-```
-
-✅ **Factory functions**
-```python
-model = resnet18(num_classes=10)  # Clean API
-```
-
-### Verification Strategy
-
-**1. Shape assertions at every layer**
-```python
-assert out.shape == (batch_size, 10), f"Expected (batch, 10), got {out.shape}"
-```
-
-**2. Gradient flow checks**
-- Skip connections verified
-- BatchNorm placement validated
-- No vanishing gradients confirmed
-
-**3. Comparison with reference implementations**
-- PyTorch's official ResNet: architecture matches
-- NumPy CNN: results match within numerical precision
-
-### Design Patterns
-
-**1. Modular architecture**
-- Separate `BasicBlock` class
-- Reusable `_make_layer` builder
-- Config-driven model creation
-
-**2. Reproducibility**
-- Fixed random seeds
-- Deterministic operations
-- Saved configurations
-
-**3. Professional practices**
-- Checkpointing best models
-- Logging training history
-- Comprehensive testing
-
----
-
-## 📚 Key Learnings
-
-### Why ResNet Works
-
-**Problem:** Vanishing gradients in deep networks
-- Gradients shrink exponentially with depth
-- Early layers barely train
-
-**Solution:** Skip connections
-```python
-output = F(x) + x  # Residual learning
-```
-
-**Mathematical insight:**
-```
-∂L/∂x = ∂L/∂y × (∂F/∂x + 1)
-      = ∂L/∂y × ∂F/∂x + ∂L/∂y
-                          ↑
-                    Identity term - gradient flows directly!
-```
-
-Even if `∂F/∂x ≈ 0`, the `∂L/∂y` term ensures gradients reach early layers.
-
-### When to Use ResNet vs Basic CNN
-
-**Use Basic CNN when:**
-- Small datasets (< 50K images)
-- Simple tasks (MNIST, small classification)
-- Limited compute resources
-- Need fast prototyping
-
-**Use ResNet when:**
-- Medium-to-large datasets (> 100K images)
-- Complex visual tasks
-- Need state-of-the-art accuracy
-- Can afford deeper models
-
-**CIFAR-10 verdict:** ResNet wins (93% vs CNN's ~85%)
-
----
-
-## 🔧 Training Configuration
-
-### Hyperparameters
-
-```python
-# Optimizer
-optimizer = SGD(
-    model.parameters(),
-    lr=0.1,              # Initial learning rate
-    momentum=0.9,        # Momentum for stable convergence
-    weight_decay=5e-4    # L2 regularization
-)
-
-# Learning rate schedule
-scheduler = CosineAnnealingLR(
-    optimizer,
-    T_max=200,           # Total epochs
-    eta_min=0            # Minimum learning rate
-)
-
-# Data augmentation
-transforms = [
-    RandomCrop(32, padding=4),    # Random crop with padding
-    RandomHorizontalFlip(),       # 50% chance flip
-    Normalize(mean, std)          # CIFAR-10 normalization
-]
-```
-
-### Why These Choices?
-
-**SGD with momentum:**
-- Accumulates velocity in consistent gradient directions
-- More stable than Adam for CNNs
-- Standard for ResNet training
-
-**Cosine annealing:**
-- Smooth learning rate decay
-- Allows model to settle into better minima
-- Better than step decay for final accuracy
-
-**Augmentation:**
-- Increases effective dataset size
-- Prevents overfitting
-- Standard for CIFAR-10
-
----
-
-## 📈 Visualizations
-
-### Training Curves
-![Training curves](resnet_cifar10_training.png)
-
-Shows:
-- Loss decreasing smoothly
-- Accuracy increasing steadily
-- No significant overfitting
-
-### Per-Class Accuracy
-![Per-class accuracy](resnet_per_class.png)
-
-Highlights:
-- Automobile and Ship: easiest classes (96%+)
-- Cat and Bird: hardest classes (~87-88%)
-- Consistent performance across most classes
-
-### Sample Predictions
-![Predictions](resnet_predictions.png)
-
-Demonstrates:
-- High confidence on correct predictions
-- Reasonable uncertainty on mistakes
-- Good visual features learned
-
----
-
-## 📖 References
-
-**ResNet Paper:**
-He, K., Zhang, X., Ren, S., & Sun, J. (2016).  
-*Deep Residual Learning for Image Recognition.*  
-Proceedings of the IEEE Conference on Computer Vision and Pattern
-Recognition (CVPR), 2016, pp. 770-778. [arXiv:1512.03385](https://arxiv.org/abs/1512.03385)
-
-**Batch Normalization:**
-Ioffe, S., & Szegedy, C. (2015).  
-*Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift.*  
-Proceedings of the 32nd International Conference on Machine Learning
-(ICML), pp. 448-456. [arXiv:1502.03167](https://arxiv.org/abs/1502.03167)
-
-**PyTorch Documentation:**
-[PyTorch CNN Tutorial](https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html)
-
----
-
-## 🤝 Contributing
-
-Found a bug or have suggestions? Contributions welcome!
-
-- **Issues:** Report bugs or request features
-- **Pull requests:** Submit improvements with clear descriptions
-- **Discussions:** Ask questions or share insights
-
----
-
-## 📝 License
-
-MIT License - See LICENSE file for details.
-
-Implementation is original work based on cited academic papers.
-
----
-
-## 👤 Author
-
-**Adi Mendelowitz**  
-ML Engineer  
+Part of the [applied-ml portfolio](../../../README.md).

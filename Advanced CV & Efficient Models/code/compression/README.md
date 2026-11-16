@@ -1,4 +1,4 @@
-# Model Compression
+# Model compression
 
 Three compression techniques applied to a ResNet-18 baseline (93.43% top-1, 11.17M
 parameters, 42.70MB) trained from scratch on CIFAR-10. All benchmarks run on CPU.
@@ -12,7 +12,7 @@ Latency is single-sample median over 100 runs.
 |---|---|
 | `distillation.py` | SmallCNN student, distillation loss, build_student factory |
 | `train_distillation.py` | Training script: distillation and CE baseline modes |
-| `quantization.py` | Dynamic and static INT8 post-training quantization |
+| `quantization.py` | Dynamic and static INT8 post-training quantisation |
 | `inference_benchmark.py` | Teacher vs student latency and accuracy benchmark |
 | `visualize_soft_targets.py` | Soft target distributions at T=1, 2, 4, 8 |
 | `distillation-kaggle.ipynb` | Distillation training notebook (Kaggle T4) |
@@ -20,7 +20,7 @@ Latency is single-sample median over 100 runs.
 
 ---
 
-## Knowledge Distillation
+## Knowledge distillation
 
 **Reference:** Hinton, G., Vinyals, O., and Dean, J. Distilling the Knowledge in a Neural
 Network. arXiv:1503.02531. https://arxiv.org/abs/1503.02531
@@ -36,7 +36,7 @@ where `z_s` and `z_t` are student and teacher logits, `T` is temperature, and `a
 weights the soft-target KL term. The `T^2` factor rescales gradient magnitudes to keep
 `alpha` a stable hyperparameter across temperature values.
 
-### Student Architecture: SmallCNN
+### Student architecture: SmallCNN
 
 ```
 Block 1: Conv(3->32,  3x3) + BN + ReLU + MaxPool(2)       -> 16x16
@@ -56,7 +56,7 @@ Linear(256, 10)
 | CE weight (1 - alpha) | 0.7 |
 | Epochs | 30 |
 | Batch size | 128 |
-| Optimizer | Adam (lr=1e-3) |
+| Optimiser | Adam (lr=1e-3) |
 | Scheduler | CosineAnnealingLR |
 
 ### Results
@@ -79,7 +79,7 @@ alpha=0.3, the KL term (weighted 30%) introduces noise relative to the dominant 
 targets at this compression ratio. A larger student or a higher alpha value would be
 expected to widen the distillation gap in the positive direction.
 
-### Soft Target Visualization
+### Soft target visualisation
 
 `visualize_soft_targets.py` plots the teacher's softmax distribution at T=1, 2, 4, and 8
 for a sample of CIFAR-10 images. At T=1 the distribution is near-degenerate (the correct
@@ -88,7 +88,7 @@ sample assigns non-trivial probability to dog and deer; a ship sample spreads pr
 to airplane and truck. At T=8 the distribution approaches uniform and the class signal
 degrades. This is the empirical justification for T=4 as the operating temperature.
 
-### Running Distillation
+### Running distillation
 
 ```bash
 # Distillation + CE baseline (Kaggle T4 recommended, ~25 min)
@@ -103,7 +103,7 @@ python "Advanced CV & Efficient Models/code/compression/visualize_soft_targets.p
 
 ---
 
-## Post-Training Quantization
+## Post-training quantisation
 
 **Reference:** Jacob, B. et al. Quantization and Training of Neural Networks for Efficient
 Integer-Arithmetic-Only Inference. CVPR 2018. https://arxiv.org/abs/1712.05877
@@ -111,21 +111,21 @@ Integer-Arithmetic-Only Inference. CVPR 2018. https://arxiv.org/abs/1712.05877
 PTQ was applied to the ResNet-18 checkpoint using `torch.ao.quantization`. Both dynamic
 and static schemes were evaluated on CPU.
 
-**Quantization map:**
+**Quantisation map:**
 
 ```
 x_int = clamp(round(x_float / scale) + zero_point, q_min, q_max)
 ```
 
-**Dynamic quantization** quantizes weights offline (INT8) and activations at runtime per
-forward pass. PyTorch does not support dynamic quantization for Conv2d; only the final
-Linear layer (5,120 of 11.17M parameters) is quantized, so no meaningful size reduction
-occurs. The latency increase reflects dequantization overhead on a convolution-dominated
+**Dynamic quantisation** quantises weights offline (INT8) and activations at runtime per
+forward pass. PyTorch does not support dynamic quantisation for Conv2d; only the final
+Linear layer (5,120 of 11.17M parameters) is quantised, so no meaningful size reduction
+occurs. The latency increase reflects dequantisation overhead on a convolution-dominated
 model.
 
 **Static PTQ** applies Conv-BN fusion before calibration to eliminate intermediate
-requantization steps, then calibrates activation observers over 100 training batches
-(12,800 samples). Per-channel weight quantization and per-tensor unsigned INT8 activation
+requantisation steps, then calibrates activation observers over 100 training batches
+(12,800 samples). Per-channel weight quantisation and per-tensor unsigned INT8 activation
 quantization are used, following Jacob et al. (2018).
 
 ### Results
@@ -140,7 +140,7 @@ Static PTQ achieves 3.95x size reduction and 1.52x speedup with no measurable ac
 degradation, consistent with well-calibrated INT8 PTQ results on ResNet-class models
 reported in Nagel et al. (2021).
 
-### Running Quantization
+### Running quantisation
 
 ```bash
 python "Advanced CV & Efficient Models/code/compression/quantization.py"
@@ -148,7 +148,7 @@ python "Advanced CV & Efficient Models/code/compression/quantization.py"
 
 ---
 
-## Unstructured Pruning
+## Unstructured pruning
 
 **Reference:** Han, S., Pool, J., Tran, J., and Dally, W. Learning both Weights and
 Connections for Efficient Neural Networks. NeurIPS 2015.
@@ -179,7 +179,7 @@ non-zeros, so size and latency remain equal to the FP32 baseline after mask remo
 Structured pruning (filter or channel removal) would be required to achieve actual size
 and latency reductions.
 
-### Running Pruning
+### Running pruning
 
 ```bash
 # Kaggle T4 recommended
@@ -188,11 +188,11 @@ and latency reductions.
 
 ---
 
-## Compression Summary
+## Compression summary
 
 All techniques applied to the same ResNet-18 checkpoint. Distillation produces a
 different architecture (SmallCNN, 170K parameters) and is not directly comparable to the
-quantization and pruning rows, which all operate on ResNet-18 weights.
+quantisation and pruning rows, which all operate on ResNet-18 weights.
 
 | Method | Params (M) | Size (MB) | Latency (ms) | Top-1 (%) |
 |---|---|---|---|---|

@@ -1,4 +1,4 @@
-# Object Detection: PCB Defect Detection with YOLOv8n
+# Object detection: PCB defect detection with YOLOv8n
 
 Fine-tuning of Ultralytics YOLOv8n on a six-class printed-circuit-board defect dataset, together with NumPy implementations of the detection metrics used to evaluate it. The YOLOv8n weights are the Ultralytics pretrained baseline. The metrics in `metrics.py` are written from scratch.
 

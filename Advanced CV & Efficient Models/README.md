@@ -1,9 +1,9 @@
-# Advanced CV and Efficient Models
+# Advanced CV and efficient models
 
 From-scratch PyTorch implementations of efficient neural network architectures and model
 compression techniques, benchmarked on CIFAR-10 image classification. All compression
 experiments use a ResNet-18 baseline (93.43% top-1, 11.17M parameters) trained from
-scratch in the companion `computer-vision-foundations` module.
+scratch in the `computer-vision-foundations` module.
 
 ## Contents
 
@@ -29,7 +29,7 @@ All scripts resolve data to `<repo_root>/data/` automatically via
 
 ---
 
-## Results Summary
+## Results summary
 
 All benchmark numbers are in `experiments/results.md`. The table below collects the
 primary result from each module.
@@ -48,7 +48,7 @@ primary result from each module.
 
 ---
 
-## Efficient Architectures
+## Efficient architectures
 
 From-scratch implementations of two modern convolutional architectures, benchmarked via a
 frozen linear probe on CIFAR-10. See `code/efficient_architectures/README.md` for full
@@ -60,14 +60,14 @@ from a single coefficient. Implemented variants: B0, B1, B4. Source:
 `code/efficient_architectures/efficientnet.py`.
 
 **ConvNeXt** (Liu et al., CVPR 2022) modernizes a ResNet training recipe by replacing 3x3
-convolutions with 7x7 depthwise convolutions, BatchNorm with Layer Normalization, ReLU with
+convolutions with 7x7 depthwise convolutions, BatchNorm with Layer Normalisation, ReLU with
 GELU, and adding inverted-bottleneck MLP blocks and learnable layer scale. Implemented
 variants: Tiny, Small, Base. Source: `code/efficient_architectures/convnext.py`.
 
-### Architecture Benchmark
+### Architecture benchmark
 
 Linear probe evaluation over frozen ImageNet pretrained backbones (via timm). Features were
-L2-normalized and passed to a logistic regression classifier (C=0.316). Inference times are
+L2-normalised and passed to a logistic regression classifier (C=0.316). Inference times are
 single-image CPU medians over 200 runs.
 
 | Architecture | Top-1 (%) | Parameters (M) | Accuracy / Param (%/M) |
@@ -81,11 +81,11 @@ EfficientNet-B0 achieves the best accuracy-per-parameter ratio at 22.52 %/M (bac
 the compound scaling hypothesis. ConvNeXt-Tiny leads in absolute accuracy. ViT-Tiny's lower
 score reflects its data hunger: the frozen linear probe setting amplifies the gap between
 transformer and ConvNet representations at this scale, where self-attention cannot fully
-leverage its long-range modeling capacity.
+use its long-range modelling capacity.
 
 Script: `experiments/benchmark_architecture.py`.
 
-### Inference Example
+### Inference example
 
 ```python
 # code/efficient_architectures/convnext.py
@@ -102,7 +102,7 @@ pred = logits.argmax(dim=1)
 
 ---
 
-## Model Compression
+## Model compression
 
 Three compression techniques applied to the same ResNet-18 checkpoint. Latency is
 single-sample CPU inference, median of 100 runs. See `code/compression/README.md` for
@@ -123,7 +123,7 @@ accuracy cost versus the teacher. L1 unstructured pruning at 40% sparsity degrad
 by 0.16pp after fine-tuning but produces no CPU speedup because standard dense kernels
 process zeroed weights identically to non-zeros.
 
-### Inference Example
+### Inference example
 
 ```python
 # code/compression/distillation.py
@@ -144,7 +144,7 @@ pred = logits.argmax(dim=1)
 
 ---
 
-## Object Detection
+## Object detection
 
 YOLOv8n fine-tuned for 6-class PCB defect detection. A from-scratch NumPy implementation of
 detection metrics (IoU, NMS, 11-point AP, mAP) is provided separately from the Ultralytics
@@ -170,7 +170,7 @@ The 0.39 gap between mAP@0.5 and mAP@0.5:0.95 reflects the difficulty of tight b
 localization for small defects (roughly 3-7% of image width). The primary failure mode is
 false positives on background texture, not cross-class confusion.
 
-### Inference Example
+### Inference example
 
 ```python
 # code/detection/
@@ -184,7 +184,7 @@ for r in results:
 
 ---
 
-## Semantic Segmentation
+## Semantic segmentation
 
 U-Net (Ronneberger et al., MICCAI 2015) implemented from scratch as a symmetric
 encoder-decoder with skip connections via feature map concatenation. Channel progression:
@@ -194,7 +194,7 @@ the same spatial dimensions as the input image. Training uses a combined loss we
 alpha=0.3 (BCE) and 0.7 (Dice), applied as `alpha * BCE + (1 - alpha) * Dice`. Source:
 `code/segmentation/unet.py`, `code/segmentation/segmentation_loss.py`.
 
-### Carvana Image Masking (Kaggle, 2017)
+### Carvana image masking (Kaggle, 2017)
 
 Binary segmentation of car silhouettes from RGB images at 512x512 resolution.
 
@@ -208,7 +208,7 @@ train/validation split (seed 42).
 | Input size | 512 x 512, RGB |
 | Batch size | 8 |
 | Epochs | 20 |
-| Optimizer | AdamW (lr=1e-4, weight_decay=1e-4) |
+| Optimiser | AdamW (lr=1e-4, weight_decay=1e-4) |
 | Scheduler | OneCycleLR (max_lr=1e-4) |
 | Loss | 0.3 * BCE + 0.7 * Dice |
 | AMP | fp16 (GradScaler) |
@@ -226,9 +226,9 @@ throughout, with no sign of overfitting at epoch 20.
 Notebook: `code/segmentation/train_unet_carvana.ipynb`. Checkpoint:
 `code/segmentation/outputs/checkpoints/best_unet_carvana.pth`.
 
-### LGG MRI Brain Tumour Segmentation
+### LGG MRI brain tumour segmentation
 
-Binary segmentation of lower-grade glioma tumour regions from grayscale MRI slices.
+Binary segmentation of lower-grade glioma tumour regions from greyscale MRI slices.
 
 **Dataset:** LGG MRI Segmentation (Buda et al., Computers in Biology and Medicine, 2019).
 Folder layout: one directory per patient (TCGA_* prefix), each containing paired
@@ -239,10 +239,10 @@ to prevent anatomy leakage between train and validation sets.
 
 | Parameter | Value |
 |---|---|
-| Input size | 256 x 256, grayscale |
+| Input size | 256 x 256, greyscale |
 | Batch size | 4 |
 | Epochs | 20 |
-| Optimizer | AdamW (lr=1e-4, weight_decay=1e-4) |
+| Optimiser | AdamW (lr=1e-4, weight_decay=1e-4) |
 | Scheduler | ReduceLROnPlateau (factor=0.5, patience=3) |
 | Loss | 0.3 * BCE + 0.7 * Dice |
 | Augmentation | Random horizontal flip, rotation +-10 degrees |
@@ -253,7 +253,7 @@ A trained checkpoint exists at `code/segmentation/checkpoints/best_unet_lgg.pth`
 the exact final validation Dice and loss are not recoverable from files on disk without
 loading the checkpoint. Script: `code/segmentation/train_unet.py`.
 
-### Inference Example
+### Inference example
 
 ```python
 # code/segmentation/unet.py
@@ -273,7 +273,7 @@ with torch.no_grad():
 
 ---
 
-## Code Structure
+## Code structure
 
 ```
 Advanced CV & Efficient Models/
@@ -308,7 +308,7 @@ Advanced CV & Efficient Models/
 
 ---
 
-## Reproducing Results
+## Reproducing results
 
 All scripts resolve data to `<repo_root>/data/` via
 `Path(__file__).resolve().parents[N] / "data"`. Run from the repo root.

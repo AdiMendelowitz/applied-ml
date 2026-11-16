@@ -1,4 +1,4 @@
-# Semantic Segmentation: U-Net from Scratch
+# Semantic segmentation: U-Net from scratch
 
 A U-Net implemented from `nn.Module` primitives and trained on two datasets: Carvana (car masks, RGB) and LGG MRI (brain tumour masks, single channel). Carvana has a recorded evaluation. The LGG run trains and checkpoints but has no recorded evaluation metric, so no figure is quoted for it.
 

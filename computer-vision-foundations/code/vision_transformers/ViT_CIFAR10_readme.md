@@ -1,4 +1,4 @@
-# Vision Transformer (ViT-Tiny): CIFAR-10
+# Vision transformer (ViT-Tiny): CIFAR-10
 
 A from-scratch implementation of ViT-Tiny trained on CIFAR-10, achieving **86.70% test accuracy**. Covers the full pipeline: architecture implementation, GPU training with modern regularisation, post-training evaluation with attention visualisation, and a detailed comparison against ResNet-18.
 
@@ -36,7 +36,7 @@ Each image is divided into 64 non-overlapping 4x4 patches. A learnable CLS token
 
 The implementation uses Pre-LN (LayerNorm before each sublayer), which is the DeiT convention and provides more stable gradients than the Post-LN architecture of the original ViT paper. Attention is computed via `F.scaled_dot_product_attention`, enabling Flash Attention on compatible hardware.
 
-### Parameter Budget
+### Parameter budget
 
 | Component | Params | Notes |
 |---|---|---|
@@ -78,7 +78,7 @@ optimizer = AdamW([
 
 Applying weight decay to positional embeddings or the CLS token would penalise their magnitude independently of their learned content, distorting their role as spatial and sequence-level representations.
 
-### Learning Rate Schedule
+### Learning rate schedule
 
 Linear warmup over 10 epochs followed by cosine annealing over the remaining 90 epochs. Warmup prevents instability in early training when attention weights are uninitialised and gradient signals are poorly scaled.
 
@@ -105,7 +105,7 @@ ResNet training curves look fundamentally different: train and test accuracy tra
 
 ---
 
-## Per-Class Results
+## Per-class results
 
 | Class | Accuracy | Correct / Total |
 |---|---|---|
@@ -125,7 +125,7 @@ ResNet training curves look fundamentally different: train and test accuracy tra
 
 Cat (69.5%) and dog (79.6%) are the only two classes below the overall average. Together they account for approximately 19% of all errors. Eight of ten classes exceed 85%. The overall gap vs ResNet-18 is therefore largely attributable to a single hard pair rather than a uniform performance deficit; the ViT is competitive on classes with discriminative texture or shape (automobile 94.4%, frog 90.8%, ship 92.2%).
 
-### Top Misclassification Pairs
+### Top misclassification pairs
 
 | True Class | Predicted As | Count |
 |---|---|---|
@@ -141,7 +141,7 @@ The cat-to-dog and dog-to-cat confusion (146 and 112 samples respectively) is th
 
 ---
 
-## Error Analysis
+## Error analysis
 
 ![Sample Predictions](outputs/evaluation/sample_predictions.png)
 
@@ -169,11 +169,11 @@ The gap matches the theoretical prediction: on 50K images, CNNs' built-in spatia
 
 Per-class, the story is more nuanced. The classes where ViT approaches ResNet (automobile 94.4%, frog 90.8%, ship 92.2%) have distinctive global shapes that are consistent across examples. These are exactly the cases where attention-based global reasoning is competitive. The largest gaps (cat, deer) involve fine-grained texture discrimination where local CNN filters are decisive and attention across 64 patches provides insufficient discriminative signal.
 
-### Training Dynamics
+### Training dynamics
 
 ResNet training curves look fundamentally different from ViT's. Train and test accuracy track closely with no oscillation; the classic overfitting gap is smooth and gradual; convergence completes around epoch 60-70. This is a direct consequence of the difference in augmentation strategy: ResNet uses lightweight augmentation (random crop + horizontal flip) producing clean training signals, while ViT uses aggressive mixed augmentation that deliberately makes training targets noisy to prevent the model from overfitting on so few examples.
 
-### Why Attention Is Slower Than Convolution
+### Why attention is slower than convolution
 
 ViT is ~3x slower despite fewer parameters. The bottleneck is the attention operation.
 
@@ -183,7 +183,7 @@ Self-attention complexity: O(n^2 x d), where n is sequence length and d is embed
 
 At 32x32 the quadratic cost is manageable (n=65). At 224x224 with 16x16 patches, n=197; the quadratic cost becomes dominant and ViT becomes much slower relative to ResNets. Additionally, PyTorch's `nn.Conv2d` benefits from decades of cuDNN kernel optimisation that attention operations do not.
 
-### Data Scale Tradeoff
+### Data scale tradeoff
 
 | Dataset size | Winner | Mechanism |
 |---|---|---|
@@ -198,9 +198,9 @@ The original ViT paper (Dosovitskiy et al., 2021) places the crossover at approx
 
 ---
 
-## Setup and Usage
+## Setup and usage
 
-### Model Configuration (ViT-Tiny for CIFAR-10)
+### Model configuration (ViT-Tiny for CIFAR-10)
 
 ```python
 img_size:     32     # CIFAR-10 image size
@@ -211,7 +211,7 @@ num_heads:    3      # attention heads
 dropout:      0.1    # regularisation
 ```
 
-### Training Configuration (CPU-optimized for local use)
+### Training configuration (CPU-optimised for local use)
 
 ```python
 num_epochs:    100   # reduce to 50 for a quick test (~70-75% accuracy)
@@ -269,7 +269,7 @@ num_heads=2
 
 ---
 
-## Repository Structure
+## Repository structure
 
 ```
 vision_transformers/
@@ -305,10 +305,3 @@ vision_transformers/
 - Loshchilov, I., & Hutter, F. (2019). *Decoupled Weight Decay Regularization*. ICLR 2019. [arXiv:1711.05101](https://arxiv.org/abs/1711.05101)
 - Abnar, S., & Zuidema, W. (2020). *Quantifying Attention Flow in Transformers*. ACL 2020. [arXiv:2005.00928](https://arxiv.org/abs/2005.00928)
 
----
-
-## Author
-
-**Adi Mendelowitz**
-
-Machine Learning Engineer

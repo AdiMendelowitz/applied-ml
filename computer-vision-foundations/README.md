@@ -1,7 +1,7 @@
-# Computer Vision Foundations
+# Computer vision foundations
 
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.7.1-red.svg)](https://pytorch.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-1.26-green.svg)](https://numpy.org/)
 [![Tests](https://img.shields.io/badge/tests-38%20passed-brightgreen.svg)](code/tests/test_core.py)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -10,19 +10,19 @@ A ground-up implementation of core computer vision systems, from classical image
 
 ---
 
-## Results Summary
+## Results summary
 
 | Model | Task | Accuracy | Parameters | Notes |
 |---|---|---|---|---|
 | CNN (NumPy) | MNIST digit classification | **90.94%** | ~103K | No frameworks; pure NumPy |
-| ResNet-18 | CIFAR-10 classification | **93.43%** | 11.2M | Matches published benchmark |
+| ResNet-18 | CIFAR-10 classification | **93.43%** | 11.2M | 50 epochs, step learning-rate schedule |
 | ViT-Tiny | CIFAR-10 classification | **86.70%** | 5.36M | T4 GPU, 100 epochs |
 | SimCLR | CIFAR-10 linear evaluation | **68.23%** | N/A | Self-supervised, no labels during pretraining |
 
 ![Results Summary](code/results_summary.png)
 ---
 
-## Repository Structure
+## Repository structure
 
 ```
 computer-vision-foundations/
@@ -43,7 +43,7 @@ Each subdirectory contains its own detailed README covering architecture, traini
 
 ## Modules
 
-### 1. Classical Computer Vision
+### 1. Classical computer vision
 **[`classical_cv/`](code/classical_cv/README.md)**
 
 NumPy-only implementations of foundational image processing algorithms, verified against OpenCV:
@@ -57,7 +57,7 @@ All transforms use inverse mapping to guarantee hole-free output. Verification i
 
 ---
 
-### 2. CNN from Scratch (NumPy Only)
+### 2. CNN from scratch (NumPy only)
 **[`cnn_scratch/`](code/cnn_scratch/README.md)**
 
 A complete Convolutional Neural Network implemented without any deep learning framework: convolution, pooling, dense layers, ReLU, softmax, cross-entropy loss, and SGD with momentum are all derived and coded manually.
@@ -71,40 +71,32 @@ Input (1×28×28) → Conv(1→8) → ReLU → MaxPool →
 
 **Key technical details:**
 - Each layer implements `forward()`, `backward()`, and `get_params()` following a consistent layer interface
-- He initialization prevents vanishing gradients in ReLU networks
+- He initialisation prevents vanishing gradients in ReLU networks
 - Validated first on synthetic line-pattern data (100% accuracy in 2 epochs) before MNIST, following incremental verification methodology
 
-**Result: 90.94% on MNIST.** The same architecture rebuilt in PyTorch achieves 93.00%; the 0.01% difference in *training* accuracy between the two confirms mathematical equivalence with PyTorch's autograd engine. [UNVERIFIED: PyTorch comparison result (93.00%) and 0.01% delta not recorded in experiment notes]
+**Result: 90.94% on MNIST.** [`compare_implementations.py`](code/pytorch_cnn/compare_implementations.py) trains the same architecture in PyTorch on the same data and prints the accuracy and loss differences side by side.
 
 ---
 
 ### 3. PyTorch CNN & ResNet-18
 **[`pytorch_cnn/`](code/pytorch_cnn/README.md)**
 
-ResNet-18 implemented from scratch in PyTorch, following He et al. (2015) precisely. No `torchvision.models`: every `BasicBlock`, projection shortcut, and global average pooling layer is written explicitly.
+ResNet-18 implemented from scratch in PyTorch, following He et al. (2015) with the 3×3 stem used for 32×32 inputs. No `torchvision.models`: every `BasicBlock`, projection shortcut, and global average pooling layer is written explicitly.
 
 **Training configuration:**
-- Optimizer: SGD with momentum (0.9), weight decay 5×10⁻⁴
-- LR schedule: Cosine annealing over 200 epochs from 0.1
+- Optimiser: SGD with momentum (0.9), weight decay 5×10⁻⁴
+- LR schedule: 0.1, reduced tenfold at epochs 20, 35 and 45, over 50 epochs
 - Augmentation: RandomCrop(32, padding=4), RandomHorizontalFlip
 - Batch size: 128
 
-**Per-class results on CIFAR-10:**
+**Best test accuracy: 93.43%** at epoch 46 (93.38% at the final epoch, 99.40% training accuracy). Every epoch is logged in [`training_history.json`](code/pytorch_cnn/training_history.json).
 
-| Class | Accuracy | Class | Accuracy |
-|---|---|---|---|
-| Airplane | 94.2% | Dog | 89.4% |
-| Automobile | 96.8% | Frog | 95.7% |
-| Bird | 88.3% | Horse | 94.1% |
-| Cat | 87.1% | Ship | 96.2% |
-| Deer | 93.5% | Truck | 94.9% |
-
-**Overall: 93.43%**, matching the published benchmark for ResNet-18 on CIFAR-10 trained from scratch.
+![ResNet-18 per-class accuracy on CIFAR-10](code/pytorch_cnn/resnet_per_class.png)
 
 ---
 
-### 4. Vision Transformer (ViT-Tiny)
-**[`vision_transformers/`](code/vision_transformers/README.md)**
+### 4. Vision transformer (ViT-Tiny)
+**[`vision_transformers/`](code/vision_transformers/ViT_CIFAR10_readme.md)**
 
 ViT-Tiny from scratch, following the DeiT-Tiny configuration (Touvron et al., 2021). Implementation uses Pre-LN (LayerNorm before each sublayer) and `F.scaled_dot_product_attention` for Flash Attention compatibility.
 
@@ -114,18 +106,18 @@ ViT-Tiny from scratch, following the DeiT-Tiny configuration (Touvron et al., 20
 - Total parameters: 5.36M
 
 **Training** (Kaggle T4 GPU, 100 epochs):
-- Optimizer: AdamW with selective weight decay: bias, LayerNorm, CLS token, and positional embeddings excluded from decay per Loshchilov & Hutter (2019)
+- Optimiser: AdamW with selective weight decay: bias, LayerNorm, CLS token, and positional embeddings excluded from decay per Loshchilov & Hutter (2019)
 - LR: linear warmup (10 epochs) → cosine annealing, peak 1×10⁻³
 - Regularisation: MixUp (α=0.2), CutMix (α=1.0), TrivialAugmentWide, RandomErasing (p=0.25), label smoothing (ε=0.1), gradient clipping (max norm 1.0)
 
-**Result: 86.70%**, 6.7 points below ResNet-18. The gap is consistent with published literature: ViT's lack of convolutional inductive biases (local connectivity, translation equivariance) requires substantially more data to compensate. The crossover point between ViT and CNNs has been empirically placed at approximately 14M images (Dosovitskiy et al., 2020); CIFAR-10's 50,000 images are three orders of magnitude below that threshold. [UNVERIFIED: the 14M crossover figure is not recorded in experiment notes]
+**Result: 86.70%**, 6.7 points below ResNet-18. The gap is consistent with published literature: ViT's lack of convolutional inductive biases (local connectivity, translation equivariance) requires substantially more data to compensate. Dosovitskiy et al. (2020) report that ViT overtakes comparable CNNs only after pre-training on datasets far larger than ImageNet-1k, and CIFAR-10 has 50,000 training images.
 
-Notably, ViT-Tiny achieves this with **52.1% fewer parameters** than ResNet-18. The dominant failure mode is cat/dog confusion (cat: 69.5%, dog: 79.6%), accounting for ~19% of all errors; a known hard pair at 32×32 resolution. A detailed architectural comparison with training curve analysis is in [`ViT_vs_ResNet.md`](code/vision_transformers/ViT_vs_ResNet.md).
+Notably, ViT-Tiny achieves this with **52.1% fewer parameters** than ResNet-18. The dominant failure mode is cat/dog confusion (cat: 69.5%, dog: 79.6%), accounting for ~19% of all errors; a known hard pair at 32×32 resolution. The architectural comparison and the training curves are in the [ViT README](code/vision_transformers/ViT_CIFAR10_readme.md#comparison-with-resnet-18).
 
 ---
 
-### 5. Self-Supervised Learning: SimCLR
-**[`self_supervised_learning/`](code/self_supervised_learning/README.md)**
+### 5. Self-supervised learning: SimCLR
+**[`self_supervised_learning/`](code/self_supervised_learning/SSL_README.MD)**
 
 SimCLR (Chen et al., 2020) contrastive learning pipeline: the encoder is pretrained entirely without labels, then a linear classifier is trained on top of frozen representations to evaluate representation quality.
 
@@ -135,58 +127,59 @@ SimCLR (Chen et al., 2020) contrastive learning pipeline: the encoder is pretrai
 - `SimCLRAugmentation`: Stochastic pipeline producing two independent views per image: RandomResizedCrop, ColorJitter, GaussianBlur, RandomHorizontalFlip, RandomGrayscale
 
 **Training configuration:**
-- 100 pretraining epochs, batch size 256, Adam optimizer, cosine annealing LR
-- Linear evaluation: encoder frozen, single linear layer trained for 100 epochs on labeled data
+- 100 pretraining epochs, batch size 256, Adam optimiser, cosine annealing LR
+- Linear evaluation: encoder frozen, single linear layer trained for 90 epochs on labelled data
 
-**Result: 68.23% linear evaluation accuracy** on CIFAR-10, trained on CPU. The original paper uses batch size 4096 and 1000 epochs on TPU hardware; this implementation achieves competitive representations under significant compute constraints, demonstrating that the core contrastive learning signal is robust to hardware limitations.
+**Result: 68.23% linear evaluation accuracy** on CIFAR-10, trained on CPU. The original paper trains a ResNet-50 with batch size 4096 for 1000 epochs on TPUs and reports much higher CIFAR-10 accuracy, so this figure reflects a ResNet-18 on a far smaller budget.
 
 ---
 
-## Test Suite
+## Test suite
 
 All modules are covered by a unit test suite in [`code/tests/test_core.py`](code/tests/test_core.py):
 
 ```
 38 tests across 15 test classes
-├── TestCorrelated2d          (3 tests)   — shape, multichannel, identity kernel
-├── TestGaussianKernel        (3 tests)   — shape, normalisation, symmetry
-├── TestGaussianBlur          (2 tests)   — spatial dims, finite output
-├── TestSobelEdges            (3 tests)   — return structure, non-negativity, flat image
-├── TestCannyEdgeDetector     (3 tests)   — shape, binary output, flat image
-├── TestNonMaxSuppression     (1 test)    — output shape
-├── TestDoubleThreshold       (2 tests)   — shape, strong > weak threshold invariant
-├── TestResNet18              (4 tests)   — output shape, finite, skip connections, batch invariance
-├── TestResNet18Channels      (1 test)    — custom in_channels
-├── TestPatchEmbedding        (2 tests)   — output shape with CLS token, patch size variants
-├── TestVitTiny               (3 tests)   — output shape, finite, batch invariance
-├── TestNTXentLoss            (3 tests)   — scalar output, finite, temperature effect
-├── TestProjectionHead        (2 tests)   — output shape, custom dims
-├── TestSimCLRModel           (3 tests)   — projected/encoder output shapes, finite
-└── TestSimCLRAugmentation    (3 tests)   — returns two tensors, correct shape, views differ
+├── TestCorrelated2d          (3 tests)    shape, multichannel, identity kernel
+├── TestGaussianKernel        (3 tests)    shape, normalisation, symmetry
+├── TestGaussianBlur          (2 tests)    spatial dims, finite output
+├── TestSobelEdges            (3 tests)    return structure, non-negativity, flat image
+├── TestCannyEdgeDetector     (3 tests)    shape, binary output, flat image
+├── TestNonMaxSuppression     (1 test)     output shape
+├── TestDoubleThreshold       (2 tests)    shape, strong > weak threshold invariant
+├── TestResNet18              (4 tests)    output shape, finite, skip connections, batch invariance
+├── TestResNet18Channels      (1 test)     custom in_channels
+├── TestPatchEmbedding        (2 tests)    output shape with CLS token, patch size variants
+├── TestVitTiny               (3 tests)    output shape, finite, batch invariance
+├── TestNTXentLoss            (3 tests)    scalar output, finite, temperature effect
+├── TestProjectionHead        (2 tests)    output shape, custom dims
+├── TestSimCLRModel           (3 tests)    projected/encoder output shapes, finite
+└── TestSimCLRAugmentation    (3 tests)    returns two tensors, correct shape, views differ
 ```
 
 All tests run on CPU with synthetic data; no downloads or GPU required.
 
 ```bash
-pytest code/tests/test_core.py -v
-# 38 passed in ~5s
+python -m pytest code/tests/test_core.py -v
+# 38 passed
 ```
 
 ---
 
 ## Setup
 
-**Requirements:** Python 3.12, PyTorch 2.0+, NumPy, Pillow
+Python 3.12 is required. Dependencies are pinned in the repository's `pyproject.toml`, so the install runs from the repository root.
 
 ```bash
-git clone https://github.com/AdiMendelowitz/CV-RP.git
-cd CV-RP/computer-vision-foundations
-pip install -r requirements.txt
+git clone https://github.com/AdiMendelowitz/applied-ml.git
+cd applied-ml
+pip install -e .
+cd computer-vision-foundations
 ```
 
 **Run tests:**
 ```bash
-pytest code/tests/test_core.py -v
+python -m pytest code/tests/test_core.py -v
 ```
 
 **Train ResNet-18 on CIFAR-10:**
@@ -196,7 +189,7 @@ python code/pytorch_cnn/train_cifar.py
 
 **Train ViT-Tiny** (GPU recommended; run on Kaggle T4):
 ```bash
-# Open code/vision_transformers/vit_cifar10_kaggle.ipynb on Kaggle
+# Open code/vision_transformers/vit-cifar10-kaggle.ipynb on Kaggle
 ```
 
 **SimCLR pretraining and linear evaluation:**
@@ -207,15 +200,15 @@ python code/self_supervised_learning/linear_eval.py
 
 ---
 
-## Key Findings
+## Key findings
 
-**Inductive bias vs data scale.** ResNet-18 outperforms ViT-Tiny by 6.7 points on CIFAR-10 (93.43% vs 86.70%). This gap is a direct measurement of the value of convolutional inductive biases (locality and translation equivariance) when labeled data is scarce. The result is quantitatively consistent with the original ViT paper's predictions.
+**Inductive bias vs data scale.** ResNet-18 outperforms ViT-Tiny by 6.7 points on CIFAR-10 (93.43% vs 86.70%). This gap is a direct measurement of the value of convolutional inductive biases (locality and translation equivariance) when labelled data is scarce. The direction agrees with the original ViT paper.
 
-**Self-supervised representations are data-efficient.** SimCLR trained without any labels produces representations that support 68.23% linear classification accuracy, compared to ResNet-18's 93.43% with full supervision. The gap reflects both the harder optimization problem and the information bottleneck of evaluating with a linear probe over a nonlinear representation.
+**Self-supervised representations are data-efficient.** SimCLR trained without any labels produces representations that support 68.23% linear classification accuracy, compared to ResNet-18's 93.43% with full supervision. The gap reflects both the harder optimisation problem and the information bottleneck of evaluating with a linear probe over a nonlinear representation.
 
 **Cat/dog confusion is architecture-agnostic.** Both ResNet-18 and ViT-Tiny identify cat and dog as their dominant failure modes. This reflects genuine visual ambiguity at 32×32 resolution rather than an architectural weakness: the class boundary is inherently hard at this input scale.
 
-**NumPy backpropagation is mathematically equivalent to autograd.** The NumPy CNN matches PyTorch's training accuracy to within 0.01%, confirming that manual gradient derivation and framework-computed gradients converge to the same solution.
+**The NumPy CNN is checked against PyTorch.** `compare_implementations.py` trains the NumPy network and a PyTorch copy of the same architecture on the same data and reports the differences in accuracy and loss.
 
 ---
 
@@ -230,12 +223,4 @@ python code/self_supervised_learning/linear_eval.py
 
 ---
 
-## Author
-
-**Adi Mendelowitz**: Machine Learning Engineer  
-Specialization: Computer Vision & Deep Learning Systems  
-GitHub: [AdiMendelowitz](https://github.com/AdiMendelowitz)
-
----
-
-*Last updated: February 2026*
+Part of the [applied-ml portfolio](../README.md).
