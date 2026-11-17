@@ -121,6 +121,8 @@ ResNet training curves look different. They are smooth between learning-rate ste
 | truck | 91.0% | 910 / 1000 |
 | **Overall** | **86.71%** | 8,671 / 10,000 |
 
+The training loop recorded 86.70% for the best checkpoint (epoch 96). The per-class evaluation of that saved checkpoint counts 8,671 of 10,000 correct, 86.71%, so the two passes differ by one image.
+
 ![Per-Class Accuracy](outputs/evaluation/per_class_accuracy.png)
 
 Cat (69.5%) and dog (79.6%) are the only two classes below the overall average. Together they account for approximately 19% of all errors. Eight of ten classes exceed 85%. The overall gap vs ResNet-18 is therefore largely attributable to a single hard pair rather than a uniform performance deficit; the ViT is competitive on classes with discriminative texture or shape (automobile 94.4%, frog 90.8%, ship 92.2%).

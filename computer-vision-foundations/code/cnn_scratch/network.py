@@ -71,8 +71,9 @@ class CrossEntropyLoss:
     """Cross-entropy loss for classification
     Combines with softmax for numerical stability
 
-    Loss = -sum(y_true * log(y_pred))
-    When used with softmax output, gradient simplifies to (y_pred - y_true)
+    Loss = -sum(y_true * log(y_pred)) / batch_size
+    backward() returns the gradient with respect to the probabilities, -y_true / y_pred / batch_size.
+    The Softmax layer's own backward pass then turns it into (y_pred - y_true) / batch_size for the logits.
     """
 
     def __init__(self) -> None:
@@ -106,15 +107,21 @@ class CrossEntropyLoss:
         return loss
 
     def backward(self) -> np.ndarray:
-        """Compute gradient of loss w.r.t. predictions
+        """Compute gradient of loss w.r.t. predicted probabilities
         Returns:
-            grad: Gradient (batch, num_classes)
+            grad: Gradient (batch, num_classes), -y_true / y_pred / batch_size
+
+        The network ends in a Softmax layer, whose backward pass applies the softmax Jacobian. Returning
+        (y_pred - y_true) here, the gradient with respect to the logits, would apply that Jacobian twice.
         """
         if self.y_pred is None or self.y_true is None:
             raise ValueError("Must call forward() before backward() to compute gradients.")
 
         batch_size = self.y_pred.shape[0]
-        grad = (self.y_pred - self.y_true) / batch_size
+        # Clip only at the smallest positive float: a 1e-12 floor would shrink the gradient of badly
+        # misclassified samples, since the Softmax Jacobian multiplies it by the true-class probability
+        y_pred_safe = np.maximum(self.y_pred, np.finfo(np.float64).tiny)
+        grad = -self.y_true / y_pred_safe / batch_size
         return grad
 
     def summary(self) -> None:

@@ -1,15 +1,15 @@
-﻿# Applied machine learning portfolio
+# Applied machine learning portfolio
 
 From-scratch PyTorch and NumPy implementations across computer vision, adversarial robustness and time-series forecasting, with measured benchmarks, tested components and documented failure modes.
 
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.7.1-red.svg)](https://pytorch.org/)
-[![Tests](https://img.shields.io/badge/tests-225-brightgreen.svg)](#testing-and-reproducibility)
+[![Tests](https://img.shields.io/badge/tests-233-brightgreen.svg)](#testing-and-reproducibility)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](license)
 
-[Featured experiments](#featured-experiments) Â·
-[Explore projects](#explore-projects) Â·
-[Quickstart](#quickstart) Â·
+[Featured experiments](#featured-experiments) ·
+[Explore projects](#explore-projects) ·
+[Quickstart](#quickstart) ·
 [Testing](#testing-and-reproducibility)
 
 ![Ten CIFAR-10 test images attacked with FGSM at four perturbation budgets](adversarial-ml-toolkit/experiments/results/fgsm_examples_by_eps.png)
@@ -76,8 +76,8 @@ A perturbation at the full budget on every pixel of a 3x32x32 image has an L2 no
 
 Defended model: the same ResNet-18 architecture trained against a 7-step PGD adversary at 8/255 for 30 epochs, following Madry et al. (2018). On the full 10,000-image test set it reaches 78.03% clean accuracy (95% Wilson interval 77.21 to 78.83) and 47.24% accuracy under PGD-20 with ten restarts (46.26 to 48.22). The naturally trained model scores 0.00% under PGD-20 on the 1,000-image subset above. The toolkit README reports the subset rows for both models side by side, together with the restart analysis and the obfuscated-gradient checks.
 
-[Inspect the toolkit](adversarial-ml-toolkit/) Â·
-[Read the defended-model protocol and results](adversarial-ml-toolkit/README.md#pgd-adversarial-training) Â·
+[Inspect the toolkit](adversarial-ml-toolkit/) ·
+[Read the defended-model protocol and results](adversarial-ml-toolkit/README.md#pgd-adversarial-training) ·
 [Read derivations and threat-model notes](adversarial-ml-toolkit/Notes/adversarial_ml_notes.md)
 
 ### Forecasting: the linear baseline remains competitive
@@ -95,7 +95,7 @@ At horizon 96 the linear baseline records the lowest MSE of the four models. At 
 
 Evaluation: test-set metrics at seed 42 under the recorded training budgets. Look-back lengths differ by model, so the table compares each model at its stated setting and is not a controlled architecture ranking. The linear baseline was run at horizons 96 and 336 only. MSE and MAE for every horizon are in the benchmark details below.
 
-[Inspect models and experiments](time-series-forecasting/) Â·
+[Inspect models and experiments](time-series-forecasting/) ·
 [Browse result files](time-series-forecasting/results/)
 
 ### Medical imaging: component performance differs from pipeline performance
@@ -146,12 +146,12 @@ The pipeline scores about 22 points below the standalone classifier. The two fig
 
 | Model | Evaluation | Result | Parameters |
 | :--- | :--- | ---: | ---: |
-| NumPy CNN | MNIST accuracy | 90.94% | Approximately 103,000 |
+| NumPy CNN | MNIST accuracy | 95.90% | Approximately 103,000 |
 | ResNet-18 | CIFAR-10 accuracy | 93.43% | 11,173,962 |
 | ViT-Tiny | CIFAR-10 accuracy | 86.70% | 5,356,234 |
 | SimCLR | CIFAR-10 frozen-encoder linear evaluation | 68.23% | n/a |
 
-These are different training and evaluation setups, so the rows do not form a uniform comparison of the four methods. Training settings, the ViT versus ResNet analysis and the NumPy-versus-PyTorch training comparison are documented in [computer-vision-foundations/README.md](computer-vision-foundations/README.md).
+These are different training and evaluation setups, so the rows do not form a uniform comparison of the four methods. Training settings, the ViT versus ResNet analysis and the finite-difference gradient checks of the NumPy CNN are documented in [computer-vision-foundations/README.md](computer-vision-foundations/README.md).
 
 ### Frozen-backbone linear probes
 
@@ -244,11 +244,11 @@ The other suites are listed under Testing and reproducibility. GPU-dependent tra
 
 ## Testing and reproducibility
 
-The repository contains 225 tests across six suites.
+The repository contains 233 tests across six suites. Four adversarial tests skip unless the trained checkpoint is present.
 
 | Suite | Tests |
 | :--- | ---: |
-| Computer vision foundations | 38 |
+| Computer vision foundations | 46 |
 | Time-series forecasting | 59 |
 | Instance segmentation and medical components | 42 |
 | Advanced CV: detection | 25 |
@@ -377,6 +377,6 @@ Papers behind the implementations:
 
 ## Author
 
-Adi Mendelowitz Â· [Blog](https://blog.adimendelowitz.dev/) Â· [LinkedIn](https://linkedin.com/in/adimendelowitz) Â· MIT licence ([license](license))
+Adi Mendelowitz · [Blog](https://blog.adimendelowitz.dev/) · [LinkedIn](https://linkedin.com/in/adimendelowitz) · MIT licence ([license](license))
 
 For implementation issues or reproducibility questions, [open a repository issue](https://github.com/AdiMendelowitz/applied-ml/issues).

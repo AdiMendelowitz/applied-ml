@@ -3,58 +3,79 @@
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-1.26-green.svg)](https://numpy.org/)
 
-A convolutional network written in NumPy alone, with the forward pass, backpropagation through every layer type and SGD with momentum all coded by hand. It reaches **90.94% test accuracy on MNIST** after 5 epochs on 5,000 training images.
+A convolutional network written in NumPy alone, with the forward pass, backpropagation through every layer type and SGD with momentum all coded by hand. It reaches **95.90% test accuracy on MNIST** after 5 epochs on 5,000 training images, scored on 1,000 test images, and every gradient it computes is checked against finite differences.
 
 ![Training curves](mnist_training.png)
+
+> [!NOTE]
+> Corrected in November 2026. Earlier versions passed the cross-entropy gradient through the softmax Jacobian a second time, scored only 960 of the 1,000 test images and reported 90.94%. Both faults are fixed, every figure on this page comes from the corrected code, and the gradient checks below fail if the doubled Jacobian returns.
 
 ## Results
 
 | Metric | Value |
 |---|---:|
-| Test accuracy | 90.94% |
-| Train accuracy | 93.97% |
-| Test loss | 0.2861 |
+| Test accuracy | 95.90% |
+| Train accuracy, final epoch | 97.06% |
+| Test loss | 0.1428 |
 | Training samples | 5,000 |
 | Test samples | 1,000 |
 | Epochs | 5 |
+| Seed | 42 |
+
+Every figure here is read from [`results.json`](results.json), which `test_real_mnist.py` writes at the end of each run.
+
+### Gradient checks
+
+[`test_gradcheck.py`](../tests/test_gradcheck.py) compares each analytical gradient with a central-difference estimate in float64, with a step of 1e-6, and fails when the relative error reaches 1e-6. It runs with the foundations test suite, 8 checks in all.
+
+| Check | What is differentiated |
+|---|---|
+| `Conv2D`, padding 1 and stride 1, then padding 0 and stride 2 | Input, weights and bias |
+| `MaxPool2D` | Input |
+| `Dense` | Input, weights and bias |
+| `ReLU`, `Softmax` | Input |
+| Softmax followed by cross-entropy | Logits, which must equal (p − y) / batch |
+| Conv, ReLU, pool, dense and softmax under cross-entropy | Every parameter of the network |
 
 ### Check against PyTorch
 
-[`compare_implementations.py`](../pytorch_cnn/compare_implementations.py) rebuilds the same architecture in PyTorch and trains both on the same data.
+[`compare_implementations.py`](../pytorch_cnn/compare_implementations.py) trains the same architecture in PyTorch on the same data and writes [`comparison_results.json`](../pytorch_cnn/comparison_results.json).
 
 | Metric | NumPy | PyTorch | Difference |
 |---|---:|---:|---:|
-| Train accuracy | 93.63% | 93.64% | 0.01 points |
-| Test accuracy | 91.25% | 93.00% | 1.75 points |
+| Train accuracy | 97.06% | 93.64% | 3.42 points |
+| Test accuracy | 95.90% | 93.00% | 2.90 points |
+| Train loss | 0.1041 | 0.2122 | 0.1082 |
+| Test loss | 0.1428 | 0.2101 | 0.0674 |
 
-Training accuracy agrees to 0.01 points, which is consistent with the hand-written gradients matching autograd. The two runs use different random initialisation and batch order, so the 1.75-point test difference is within what those would produce. This comparison is a separate run from the headline result, which is why its NumPy test accuracy reads 91.25% and the table above reads 90.94%.
+The two frameworks draw their initial weights from different random number generators, so this compares two training runs of one architecture. The gradient checks above are the exact test. The NumPy side reproduces the headline run above exactly, since both use seed 42.
 
 ### Training dynamics
 
-- Train loss falls from 1.71 to 0.25 over the 5 epochs with no oscillation.
-- The gap between train and test accuracy stays near 3 points.
-- Test loss sits below train loss in the first epochs. Train loss is averaged over every mini-batch in the epoch, including the early ones, while test loss is measured once on the weights at the end of the epoch.
+- Train loss falls from 0.82 to 0.10 over the 5 epochs, lower at every epoch.
+- At the final epoch, train accuracy is 1.2 points above test accuracy.
+- Test loss starts below train loss. Train loss is averaged over every mini-batch in the epoch, including the early ones, while test loss is measured once on the weights at the end of the epoch.
 
 ### Per-class accuracy
 
-| Digit | Accuracy | Most frequent confusion |
+| Digit | Accuracy | Most frequent wrong prediction (count) |
 |---|---:|---|
-| 0 | 94.12% | |
-| 1 | 94.44% | |
-| 2 | 90.52% | 7 |
-| 3 | 88.79% | 8 |
-| 4 | 95.45% (highest) | |
-| 5 | 83.91% (lowest) | 6 |
-| 6 | 90.80% | 0 |
-| 7 | 91.92% | 1 |
-| 8 | 92.13% | 3 |
-| 9 | 85.11% | 4 |
+| 0 | 98.82% | 6 (1) |
+| 1 | 100.00% (highest) | none |
+| 2 | 89.66% | 8 (3) |
+| 3 | 98.13% | 8 (1) |
+| 4 | 98.18% | 9 (1) |
+| 5 | 96.55% | 9 (1) |
+| 6 | 97.70% | 0 (2) |
+| 7 | 94.95% | 9 (2) |
+| 8 | 86.52% (lowest) | 9 (3) |
+| 9 | 97.87% | 7 (1) |
 
 ### Error analysis
 
 ![Misclassified examples](mistakes.png)
 
-The errors concentrate on digit pairs that share strokes, such as 4 and 6, 7 and 9, and 3 and 8. Most of the misclassified images are ambiguous to a human reader as well.
+The network gets 41 of the 1,000 test images wrong. The most frequent confusions are 8 read as 9 (3), 8 read as 0 (3), 2 read as 8 (3), read from the confusion matrix in `results.json`.
 
 ## Architecture
 
@@ -91,36 +112,34 @@ Each layer in `layers.py` implements three methods. `forward(input)` computes th
 | `Softmax` | eˣ / Σeˣ | Full Jacobian |
 | `Flatten` | Reshape to 1D | Reshape to the original dimensions |
 
+`CrossEntropyLoss.backward()` in `network.py` returns the gradient with respect to the probabilities, −y / p / batch. The `Softmax` layer's backward pass turns that into (p − y) / batch for the logits, so the Jacobian is applied exactly once.
+
 ```python
 # Dense layer backward
 def backward(self, grad_output: np.ndarray) -> np.ndarray:
     self.grad_weights = self.input.T @ grad_output    # ∂L/∂W
     self.grad_bias    = grad_output.sum(axis=0)       # ∂L/∂b
     return grad_output @ self.weights.T               # ∂L/∂x, passed to the previous layer
-
-# ReLU backward
-def backward(self, grad_output: np.ndarray) -> np.ndarray:
-    return grad_output * (self.input > 0)
 ```
 
-Weights use He initialisation, `std = sqrt(2 / fan_in)`, which keeps gradient variance stable through ReLU layers. The optimiser in `train.py` is SGD with momentum 0.9.
-
-```python
-velocity  = momentum * velocity - learning_rate * gradient
-parameter += velocity
-```
+Weights use He initialisation, `std = sqrt(2 / fan_in)`, which keeps gradient variance stable through ReLU layers. The optimiser in `train.py` is SGD with momentum 0.9. Training drops the last partial batch of each shuffled epoch, and evaluation scores every test image.
 
 ## Validation order
 
-The network was first trained on a synthetic task before it saw MNIST, so that gradient bugs would show up on data where the right answer is obvious. The task has 600 training and 150 test images of 14×14 pixels in three classes (vertical, horizontal and diagonal lines).
+Before MNIST, the network is trained on a synthetic task where the right answer is obvious, 600 training and 150 test images of 14×14 pixels in three classes (vertical, horizontal and diagonal lines). `test_mnist.py` gives:
 
 ```
-Epoch 1:   Train 47.74%, Test 90.62%
-Epoch 2:   Train 99.65%, Test 100.00%
-Epoch 3+:  Train 100%,   Test 100.00%
+Epoch  1: Train  72.74%, Test 100.00%
+Epoch  2: Train 100.00%, Test 100.00%
+Epoch  3: Train 100.00%, Test 100.00%
+Epoch  4: Train 100.00%, Test 100.00%
+Epoch  5: Train 100.00%, Test 100.00%
+Epoch  6: Train 100.00%, Test 100.00%
+Epoch  7: Train 100.00%, Test 100.00%
+Epoch  8: Train 100.00%, Test 100.00%
+Epoch  9: Train 100.00%, Test 100.00%
+Epoch 10: Train 100.00%, Test 100.00%
 ```
-
-MNIST training followed only after this passed.
 
 ## Usage
 
@@ -129,17 +148,18 @@ MNIST training followed only after this passed.
 pip install numpy tensorflow
 
 python test_mnist.py        # synthetic line patterns
-python test_real_mnist.py   # MNIST training and evaluation
+python test_real_mnist.py   # MNIST training and evaluation, writes results.json
+python -m pytest ../tests/test_gradcheck.py -v
 ```
 
-Log of the comparison run:
+Log of the run reported above:
 
 ```
-Epoch 1/5 - Train Loss: 1.7076, Train Acc: 0.4521, Test Loss: 0.9539, Test Acc: 0.7156
-Epoch 2/5 - Train Loss: 0.5711, Train Acc: 0.8347, Test Loss: 0.5387, Test Acc: 0.8198
-Epoch 3/5 - Train Loss: 0.3688, Train Acc: 0.8942, Test Loss: 0.3987, Test Acc: 0.8802
-Epoch 4/5 - Train Loss: 0.2931, Train Acc: 0.9183, Test Loss: 0.3411, Test Acc: 0.8990
-Epoch 5/5 - Train Loss: 0.2507, Train Acc: 0.9363, Test Loss: 0.2861, Test Acc: 0.9125
+Epoch 1/5 - Train Loss: 0.8175, Train Acc: 0.7344, Test Loss: 0.3811, Test Acc: 0.8750
+Epoch 2/5 - Train Loss: 0.2456, Train Acc: 0.9261, Test Loss: 0.2043, Test Acc: 0.9340
+Epoch 3/5 - Train Loss: 0.1668, Train Acc: 0.9497, Test Loss: 0.1585, Test Acc: 0.9500
+Epoch 4/5 - Train Loss: 0.1160, Train Acc: 0.9655, Test Loss: 0.1793, Test Acc: 0.9420
+Epoch 5/5 - Train Loss: 0.1041, Train Acc: 0.9706, Test Loss: 0.1428, Test Acc: 0.9590
 ```
 
 ## Files
@@ -148,10 +168,12 @@ Epoch 5/5 - Train Loss: 0.2507, Train Acc: 0.9363, Test Loss: 0.2861, Test Acc: 
 |---|---|
 | `layers.py` | Every layer with its forward and backward pass |
 | `network.py` | `Network` class and `CrossEntropyLoss` |
-| `train.py` | SGD with momentum and the training loop |
+| `train.py` | SGD with momentum, the training loop and evaluation |
 | `test_mnist.py` | Synthetic pattern validation |
 | `test_real_mnist.py` | MNIST training and evaluation |
+| `results.json` | History, per-class accuracy and confusion matrix of the reported run |
 | `cnn_scratch_test.py` | Unit tests for the training loop |
+| [`../tests/test_gradcheck.py`](../tests/test_gradcheck.py) | Finite-difference gradient checks |
 
 ## References
 

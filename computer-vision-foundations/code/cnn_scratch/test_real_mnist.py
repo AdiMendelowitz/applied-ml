@@ -2,12 +2,17 @@
 Test CNN on real MNIST handwritten digits
 """
 
+import json
+from pathlib import Path
+
 import numpy as np
 from layers import Conv2D, ReLU, MaxPool2D, Flatten, Dense, Softmax
 from network import Network, CrossEntropyLoss
 from train import SGD, train
 
 import matplotlib.pyplot as plt
+
+np.random.seed(42)
 
 # Download and load MNIST
 print("Loading MNIST dataset...")
@@ -190,3 +195,22 @@ for i, idx in enumerate(mistakes[:10]):
     ax.set_title(f"True: {y_test[idx]}, Pred: {predictions_all[idx]}")
     ax.axis("off")
 plt.savefig("mistakes.png")
+
+# Record the run so every figure in the README can be traced to a file
+confusion = np.zeros((10, 10), dtype=int)
+for true_label, pred_label in zip(y_test, predictions_all):
+    confusion[true_label, pred_label] += 1
+results = {
+    "seed": 42,
+    "train_samples": int(X_train.shape[0]),
+    "test_samples": int(X_test.shape[0]),
+    "epochs": len(history["test_acc"]),
+    "history": {k: [float(v) for v in vals] for k, vals in history.items()},
+    "per_class_accuracy": {
+        str(d): float((predictions_all[y_test == d] == d).mean()) for d in range(10) if (y_test == d).any()
+    },
+    "confusion_matrix": confusion.tolist(),
+    "test_mistakes": int(len(mistakes)),
+}
+(Path(__file__).resolve().parent / "results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
+print("Saved results.json")

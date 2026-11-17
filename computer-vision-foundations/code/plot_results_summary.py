@@ -25,7 +25,7 @@ import numpy as np
 # Known results — update if you re-run any model
 # ---------------------------------------------------------------------------
 FINAL_RESULTS: list[dict] = [
-    {"model": "CNN\n(NumPy)", "accuracy": 90.94, "color": "#6C8EBF"},
+    {"model": "CNN\n(NumPy)", "accuracy": 95.90, "color": "#6C8EBF"},
     {"model": "ResNet-18", "accuracy": 93.43, "color": "#82B366"},
     {"model": "ViT-Tiny", "accuracy": 86.70, "color": "#D6A520"},
     {"model": "SimCLR\n(linear eval)", "accuracy": 68.23, "color": "#AE4132"},

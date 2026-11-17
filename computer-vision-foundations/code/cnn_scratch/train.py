@@ -52,7 +52,7 @@ def compute_loss_and_accuracy(
     if train_mode and optimizer is None:
         raise ValueError("Optimizer must be provided in train mode to update parameters.")
 
-    total_loss, correct = 0.0, 0
+    total_loss, correct, seen = 0.0, 0, 0
 
     for i in range(num_batches):
         start = i * batch_size
@@ -61,7 +61,8 @@ def compute_loss_and_accuracy(
 
         y_pred = model.forward(X_batch)
         loss = loss_fn.forward(y_pred, y_batch)
-        total_loss += loss
+        total_loss += loss * len(y_batch)
+        seen += len(y_batch)
 
         predictions = np.argmax(y_pred, axis=1)
         correct += np.sum(predictions == y_batch)
@@ -71,8 +72,8 @@ def compute_loss_and_accuracy(
             model.backward(grad)
             optimizer.step(model.get_params())
 
-    average_loss = total_loss / num_batches
-    accuracy = correct / (num_batches * batch_size)
+    average_loss = total_loss / seen
+    accuracy = correct / seen
     return average_loss, accuracy
 
 
@@ -141,7 +142,8 @@ def evaluate(
     Returns:
         (average_loss, accuracy)
     """
-    num_batches: int = X_test.shape[0] // batch_size
+    # Ceiling division, so the last partial batch is evaluated too
+    num_batches: int = -(-X_test.shape[0] // batch_size)
     avg_loss, accuracy = compute_loss_and_accuracy(
         model=model,
         loss_fn=loss_fn,

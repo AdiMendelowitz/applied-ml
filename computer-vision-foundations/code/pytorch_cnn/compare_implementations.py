@@ -2,6 +2,7 @@
 Compare Numpy and PyTorch implementations
 """
 
+import json
 import os
 import sys
 
@@ -183,3 +184,14 @@ else:
     print("  - Bug in one implementation")
 
 print("\n" + "=" * 70)
+
+comparison = {
+    "seed": 42,  # set by cnn_pytotch on import, for both NumPy and PyTorch
+    "train_samples": int(X_train.shape[0]),
+    "test_samples": int(X_test.shape[0]),
+    "numpy": {k: [float(v) for v in vals] for k, vals in history_numpy.items()},
+    "pytorch": {k: [float(v) for v in vals] for k, vals in history_pytorch.items()},
+}
+with open(os.path.join(os.path.dirname(__file__), "comparison_results.json"), "w", encoding="utf-8") as f:
+    json.dump(comparison, f, indent=2)
+print("Saved comparison_results.json")

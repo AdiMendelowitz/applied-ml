@@ -1,5 +1,7 @@
 # CNN from Scratch: NumPy Only
 
+> Correction, November 2026: these notes describe the run before the cross-entropy gradient fix. The corrected results are in [the cnn_scratch README](../code/cnn_scratch/README.md).
+
 A complete Convolutional Neural Network implementation using only NumPy, built to understand deep learning from first principles.
 
 ## Features

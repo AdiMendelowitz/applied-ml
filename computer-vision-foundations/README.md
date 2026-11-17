@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.7.1-red.svg)](https://pytorch.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-1.26-green.svg)](https://numpy.org/)
-[![Tests](https://img.shields.io/badge/tests-38%20passed-brightgreen.svg)](code/tests/test_core.py)
+[![Tests](https://img.shields.io/badge/tests-46%20passed-brightgreen.svg)](code/tests/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 A ground-up implementation of core computer vision systems, from classical image processing through deep residual networks, Vision Transformers, and self-supervised representation learning. Every component is implemented from mathematical first principles with no reliance on high-level model libraries, then verified against established benchmarks.
@@ -14,7 +14,7 @@ A ground-up implementation of core computer vision systems, from classical image
 
 | Model | Task | Accuracy | Parameters | Notes |
 |---|---|---|---|---|
-| CNN (NumPy) | MNIST digit classification | **90.94%** | ~103K | No frameworks; pure NumPy |
+| CNN (NumPy) | MNIST digit classification | **95.90%** | ~103K | No frameworks; pure NumPy |
 | ResNet-18 | CIFAR-10 classification | **93.43%** | 11.2M | 50 epochs, step learning-rate schedule |
 | ViT-Tiny | CIFAR-10 classification | **86.70%** | 5.36M | T4 GPU, 100 epochs |
 | SimCLR | CIFAR-10 linear evaluation | **68.23%** | N/A | Self-supervised, no labels during pretraining |
@@ -33,7 +33,8 @@ computer-vision-foundations/
 │   ├── vision_transformers/        # ViT-Tiny from scratch in PyTorch
 │   ├── self_supervised_learning/   # SimCLR contrastive learning pipeline
 │   └── tests/
-│       └── test_core.py            # 38 unit tests covering all modules
+│       ├── test_core.py            # 38 unit tests covering all modules
+│       └── test_gradcheck.py       # 8 finite-difference gradient checks of the NumPy CNN
 └── README.md                       # This file
 ```
 
@@ -72,9 +73,9 @@ Input (1×28×28) → Conv(1→8) → ReLU → MaxPool →
 **Key technical details:**
 - Each layer implements `forward()`, `backward()`, and `get_params()` following a consistent layer interface
 - He initialisation prevents vanishing gradients in ReLU networks
-- Validated first on synthetic line-pattern data (100% accuracy in 2 epochs) before MNIST, following incremental verification methodology
+- Validated first on synthetic line-pattern data (100.00% test accuracy after 10 epochs) before MNIST, following incremental verification methodology
 
-**Result: 90.94% on MNIST.** [`compare_implementations.py`](code/pytorch_cnn/compare_implementations.py) trains the NumPy network and a PyTorch copy of the same architecture on the same 5,000 training and 1,000 test images. Training accuracy agrees to 0.01 points (93.63% against 93.64%) and test accuracy differs by 1.75 points (91.25% against 93.00%). Seeds are fixed, so rerunning the script reproduces these figures exactly.
+**Result: 95.90% on MNIST**, on all 1,000 test images. Every layer's gradient, and the network's as a whole, is checked against finite differences in [`test_gradcheck.py`](code/tests/test_gradcheck.py). [`compare_implementations.py`](code/pytorch_cnn/compare_implementations.py) trains a PyTorch copy of the same architecture on the same data, reaching 93.00% against the NumPy network's 95.90%.
 
 ---
 
@@ -96,7 +97,7 @@ ResNet-18 implemented from scratch in PyTorch, following He et al. (2015) with t
 ---
 
 ### 4. Vision transformer (ViT-Tiny)
-**[`vision_transformers/`](code/vision_transformers/ViT_CIFAR10_readme.md)**
+**[`vision_transformers/`](code/vision_transformers/README.md)**
 
 ViT-Tiny from scratch, following the DeiT-Tiny configuration (Touvron et al., 2021). Implementation uses Pre-LN (LayerNorm before each sublayer) and `F.scaled_dot_product_attention` for Flash Attention compatibility.
 
@@ -112,12 +113,12 @@ ViT-Tiny from scratch, following the DeiT-Tiny configuration (Touvron et al., 20
 
 **Result: 86.70%**, 6.7 points below ResNet-18. The gap is consistent with published literature: ViT's lack of convolutional inductive biases (local connectivity, translation equivariance) requires substantially more data to compensate. Dosovitskiy et al. (2020) report that ViT overtakes comparable CNNs only after pre-training on datasets far larger than ImageNet-1k, and CIFAR-10 has 50,000 training images.
 
-Notably, ViT-Tiny achieves this with **52.1% fewer parameters** than ResNet-18. The dominant failure mode is cat/dog confusion (cat: 69.5%, dog: 79.6%), accounting for ~19% of all errors; a known hard pair at 32×32 resolution. The architectural comparison and the training curves are in the [ViT README](code/vision_transformers/ViT_CIFAR10_readme.md#comparison-with-resnet-18).
+Notably, ViT-Tiny achieves this with **52.1% fewer parameters** than ResNet-18. The dominant failure mode is cat/dog confusion (cat: 69.5%, dog: 79.6%), accounting for ~19% of all errors; a known hard pair at 32×32 resolution. The architectural comparison and the training curves are in the [ViT README](code/vision_transformers/README.md#comparison-with-resnet-18).
 
 ---
 
 ### 5. Self-supervised learning: SimCLR
-**[`self_supervised_learning/`](code/self_supervised_learning/SSL_README.MD)**
+**[`self_supervised_learning/`](code/self_supervised_learning/README.md)**
 
 SimCLR (Chen et al., 2020) contrastive learning pipeline: the encoder is pretrained entirely without labels, then a linear classifier is trained on top of frozen representations to evaluate representation quality.
 
@@ -136,7 +137,7 @@ SimCLR (Chen et al., 2020) contrastive learning pipeline: the encoder is pretrai
 
 ## Test suite
 
-All modules are covered by a unit test suite in [`code/tests/test_core.py`](code/tests/test_core.py):
+[`code/tests/test_gradcheck.py`](code/tests/test_gradcheck.py) checks the NumPy CNN's gradients with 8 finite-difference tests, and the unit tests in [`code/tests/test_core.py`](code/tests/test_core.py) cover every module:
 
 ```
 38 tests across 15 test classes
@@ -160,8 +161,8 @@ All modules are covered by a unit test suite in [`code/tests/test_core.py`](code
 All tests run on CPU with synthetic data; no downloads or GPU required.
 
 ```bash
-python -m pytest code/tests/test_core.py -v
-# 38 passed
+python -m pytest code/tests/ -v
+# 46 passed
 ```
 
 ---
@@ -208,7 +209,7 @@ python code/self_supervised_learning/linear_eval.py
 
 **Cat/dog confusion is architecture-agnostic.** Both ResNet-18 and ViT-Tiny identify cat and dog as their dominant failure modes. This reflects genuine visual ambiguity at 32×32 resolution rather than an architectural weakness: the class boundary is inherently hard at this input scale.
 
-**The NumPy CNN tracks PyTorch.** Trained side by side on the same data, the NumPy network and its PyTorch copy finish within 0.01 points on training accuracy and 1.75 points on test accuracy. Their final training losses differ more (0.251 against 0.212), and the two frameworks start from different random weights, so this agreement supports the hand-written gradients without proving them. A finite-difference gradient check on each layer would be the direct test.
+**The NumPy CNN's gradients are verified, and the check found a real fault.** Finite-difference checks compare every analytical gradient with a numerical one. They exposed a cross-entropy gradient that was passed through the softmax Jacobian a second time. That fault still let the network train, and the earlier code reported 90.94% on 960 test images. With the gradient corrected and all 1,000 test images scored, the same network reaches 95.90%.
 
 ---
 
