@@ -1,4 +1,4 @@
-# Applied machine learning portfolio
+﻿# Applied machine learning portfolio
 
 From-scratch PyTorch and NumPy implementations across computer vision, adversarial robustness and time-series forecasting, with measured benchmarks, tested components and documented failure modes.
 
@@ -7,9 +7,9 @@ From-scratch PyTorch and NumPy implementations across computer vision, adversari
 [![Tests](https://img.shields.io/badge/tests-225-brightgreen.svg)](#testing-and-reproducibility)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](license)
 
-[Featured experiments](#featured-experiments) ·
-[Explore projects](#explore-projects) ·
-[Quickstart](#quickstart) ·
+[Featured experiments](#featured-experiments) Â·
+[Explore projects](#explore-projects) Â·
+[Quickstart](#quickstart) Â·
 [Testing](#testing-and-reproducibility)
 
 ![Ten CIFAR-10 test images attacked with FGSM at four perturbation budgets](adversarial-ml-toolkit/experiments/results/fgsm_examples_by_eps.png)
@@ -76,8 +76,8 @@ A perturbation at the full budget on every pixel of a 3x32x32 image has an L2 no
 
 Defended model: the same ResNet-18 architecture trained against a 7-step PGD adversary at 8/255 for 30 epochs, following Madry et al. (2018). On the full 10,000-image test set it reaches 78.03% clean accuracy (95% Wilson interval 77.21 to 78.83) and 47.24% accuracy under PGD-20 with ten restarts (46.26 to 48.22). The naturally trained model scores 0.00% under PGD-20 on the 1,000-image subset above. The toolkit README reports the subset rows for both models side by side, together with the restart analysis and the obfuscated-gradient checks.
 
-[Inspect the toolkit](adversarial-ml-toolkit/) ·
-[Read the defended-model protocol and results](adversarial-ml-toolkit/README.md#pgd-adversarial-training) ·
+[Inspect the toolkit](adversarial-ml-toolkit/) Â·
+[Read the defended-model protocol and results](adversarial-ml-toolkit/README.md#pgd-adversarial-training) Â·
 [Read derivations and threat-model notes](adversarial-ml-toolkit/Notes/adversarial_ml_notes.md)
 
 ### Forecasting: the linear baseline remains competitive
@@ -95,7 +95,7 @@ At horizon 96 the linear baseline records the lowest MSE of the four models. At 
 
 Evaluation: test-set metrics at seed 42 under the recorded training budgets. Look-back lengths differ by model, so the table compares each model at its stated setting and is not a controlled architecture ranking. The linear baseline was run at horizons 96 and 336 only. MSE and MAE for every horizon are in the benchmark details below.
 
-[Inspect models and experiments](time-series-forecasting/) ·
+[Inspect models and experiments](time-series-forecasting/) Â·
 [Browse result files](time-series-forecasting/results/)
 
 ### Medical imaging: component performance differs from pipeline performance
@@ -151,7 +151,7 @@ The pipeline scores about 22 points below the standalone classifier. The two fig
 | ViT-Tiny | CIFAR-10 accuracy | 86.70% | 5,356,234 |
 | SimCLR | CIFAR-10 frozen-encoder linear evaluation | 68.23% | n/a |
 
-These are different training and evaluation setups, so the rows do not form a uniform comparison of the four methods. Training settings, the ViT versus ResNet analysis and the NumPy-versus-autograd gradient check are documented in [computer-vision-foundations/README.md](computer-vision-foundations/README.md).
+These are different training and evaluation setups, so the rows do not form a uniform comparison of the four methods. Training settings, the ViT versus ResNet analysis and the NumPy-versus-PyTorch training comparison are documented in [computer-vision-foundations/README.md](computer-vision-foundations/README.md).
 
 ### Frozen-backbone linear probes
 
@@ -308,45 +308,45 @@ Code style is configured for flake8 with a 120-character line limit (`.flake8`),
 
 ```text
 applied-ml/
-├── computer-vision-foundations/        # From-scratch: classical CV, CNNs, ViT, SimCLR
-│   └── code/
-│       ├── classical_cv/               # NumPy-only: convolution, Sobel, Canny, geometric transforms
-│       ├── cnn_scratch/                # NumPy CNN with full forward pass and backprop (MNIST)
-│       ├── pytorch_cnn/                # ResNet-18 from scratch (CIFAR-10)
-│       ├── vision_transformers/        # ViT-Tiny from scratch (CIFAR-10)
-│       ├── self_supervised_learning/   # SimCLR contrastive learning pipeline
-│       └── tests/                      # Core unit tests (classical CV, ResNet, ViT, SimCLR, metrics)
-├── Advanced CV & Efficient Models/     # Efficient architectures, compression, detection, segmentation
-│   ├── code/
-│   │   ├── efficient_architectures/    # EfficientNet and ConvNeXt from scratch
-│   │   ├── compression/                # Knowledge distillation, INT8 PTQ, L1 pruning, inference benchmarking
-│   │   ├── detection/                  # YOLOv8n PCB defect detection; NumPy metrics (IoU, NMS, AP, mAP)
-│   │   └── segmentation/               # U-Net from scratch; Carvana and LGG MRI segmentation
-│   └── experiments/                    # Linear-probe architecture benchmark
-├── cv-detection-segmentation/          # Instance segmentation components and ISIC 2018 medical imaging
-│   └── instance_segmentation/
-│       ├── hungarian_loss.py           # DETR set prediction loss with Hungarian matching (from scratch)
-│       ├── roi_align.py                # RoI Align with bilinear interpolation (from scratch)
-│       ├── mask_head.py                # Mask R-CNN mask head (from scratch)
-│       ├── focal_loss.py               # Alpha-balanced focal loss (from scratch)
-│       ├── isic_pipeline.py            # End-to-end lesion segmentation and classification pipeline
-│       ├── isic2018-task1-segmentation.ipynb
-│       ├── isic2018-task3-classification.ipynb
-│       └── isic_pipeline.ipynb
-├── adversarial-ml-toolkit/             # FGSM, PGD, Carlini-Wagner; PGD adversarial training
-│   ├── attacks/                        # FGSM, PGD, C&W L2 (from scratch)
-│   ├── defenses/                       # PGD adversarial training
-│   ├── models/                         # ResNet-18 (CIFAR stem) and the normalisation wrapper
-│   ├── experiments/                    # Epsilon sweep and robustness evaluation
-│   ├── Notes/                          # Derivations and analysis
-│   └── tests/
-└── time-series-forecasting/            # Transformer forecasting: PatchTST, iTransformer, TimeMixer
-    ├── models/                         # PatchTST, iTransformer, TimeMixer implementations
-    ├── baselines/                      # Linear baseline
-    ├── data/                           # ETT dataset loader
-    ├── experiments/                    # Training notebooks
-    ├── results/                        # Benchmark CSVs and forecast plots
-    └── tests/                          # Model and dataset unit tests
+â”œâ”€â”€ computer-vision-foundations/        # From-scratch: classical CV, CNNs, ViT, SimCLR
+â”‚   â””â”€â”€ code/
+â”‚       â”œâ”€â”€ classical_cv/               # NumPy-only: convolution, Sobel, Canny, geometric transforms
+â”‚       â”œâ”€â”€ cnn_scratch/                # NumPy CNN with full forward pass and backprop (MNIST)
+â”‚       â”œâ”€â”€ pytorch_cnn/                # ResNet-18 from scratch (CIFAR-10)
+â”‚       â”œâ”€â”€ vision_transformers/        # ViT-Tiny from scratch (CIFAR-10)
+â”‚       â”œâ”€â”€ self_supervised_learning/   # SimCLR contrastive learning pipeline
+â”‚       â””â”€â”€ tests/                      # Core unit tests (classical CV, ResNet, ViT, SimCLR, metrics)
+â”œâ”€â”€ Advanced CV & Efficient Models/     # Efficient architectures, compression, detection, segmentation
+â”‚   â”œâ”€â”€ code/
+â”‚   â”‚   â”œâ”€â”€ efficient_architectures/    # EfficientNet and ConvNeXt from scratch
+â”‚   â”‚   â”œâ”€â”€ compression/                # Knowledge distillation, INT8 PTQ, L1 pruning, inference benchmarking
+â”‚   â”‚   â”œâ”€â”€ detection/                  # YOLOv8n PCB defect detection; NumPy metrics (IoU, NMS, AP, mAP)
+â”‚   â”‚   â””â”€â”€ segmentation/               # U-Net from scratch; Carvana and LGG MRI segmentation
+â”‚   â””â”€â”€ experiments/                    # Linear-probe architecture benchmark
+â”œâ”€â”€ cv-detection-segmentation/          # Instance segmentation components and ISIC 2018 medical imaging
+â”‚   â””â”€â”€ instance_segmentation/
+â”‚       â”œâ”€â”€ hungarian_loss.py           # DETR set prediction loss with Hungarian matching (from scratch)
+â”‚       â”œâ”€â”€ roi_align.py                # RoI Align with bilinear interpolation (from scratch)
+â”‚       â”œâ”€â”€ mask_head.py                # Mask R-CNN mask head (from scratch)
+â”‚       â”œâ”€â”€ focal_loss.py               # Alpha-balanced focal loss (from scratch)
+â”‚       â”œâ”€â”€ isic_pipeline.py            # End-to-end lesion segmentation and classification pipeline
+â”‚       â”œâ”€â”€ isic2018-task1-segmentation.ipynb
+â”‚       â”œâ”€â”€ isic2018-task3-classification.ipynb
+â”‚       â””â”€â”€ isic_pipeline.ipynb
+â”œâ”€â”€ adversarial-ml-toolkit/             # FGSM, PGD, Carlini-Wagner; PGD adversarial training
+â”‚   â”œâ”€â”€ attacks/                        # FGSM, PGD, C&W L2 (from scratch)
+â”‚   â”œâ”€â”€ defenses/                       # PGD adversarial training
+â”‚   â”œâ”€â”€ models/                         # ResNet-18 (CIFAR stem) and the normalisation wrapper
+â”‚   â”œâ”€â”€ experiments/                    # Epsilon sweep and robustness evaluation
+â”‚   â”œâ”€â”€ Notes/                          # Derivations and analysis
+â”‚   â””â”€â”€ tests/
+â””â”€â”€ time-series-forecasting/            # Transformer forecasting: PatchTST, iTransformer, TimeMixer
+    â”œâ”€â”€ models/                         # PatchTST, iTransformer, TimeMixer implementations
+    â”œâ”€â”€ baselines/                      # Linear baseline
+    â”œâ”€â”€ data/                           # ETT dataset loader
+    â”œâ”€â”€ experiments/                    # Training notebooks
+    â”œâ”€â”€ results/                        # Benchmark CSVs and forecast plots
+    â””â”€â”€ tests/                          # Model and dataset unit tests
 ```
 
 </details>
@@ -377,6 +377,6 @@ Papers behind the implementations:
 
 ## Author
 
-Adi Mendelowitz · [Blog](https://blog.adimendelowitz.dev/) · [LinkedIn](https://linkedin.com/in/adimendelowitz) · MIT licence ([license](license))
+Adi Mendelowitz Â· [Blog](https://blog.adimendelowitz.dev/) Â· [LinkedIn](https://linkedin.com/in/adimendelowitz) Â· MIT licence ([license](license))
 
 For implementation issues or reproducibility questions, [open a repository issue](https://github.com/AdiMendelowitz/applied-ml/issues).

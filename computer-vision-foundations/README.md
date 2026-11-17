@@ -74,7 +74,7 @@ Input (1×28×28) → Conv(1→8) → ReLU → MaxPool →
 - He initialisation prevents vanishing gradients in ReLU networks
 - Validated first on synthetic line-pattern data (100% accuracy in 2 epochs) before MNIST, following incremental verification methodology
 
-**Result: 90.94% on MNIST.** [`compare_implementations.py`](code/pytorch_cnn/compare_implementations.py) trains the same architecture in PyTorch on the same data and prints the accuracy and loss differences side by side.
+**Result: 90.94% on MNIST.** [`compare_implementations.py`](code/pytorch_cnn/compare_implementations.py) trains the NumPy network and a PyTorch copy of the same architecture on the same 5,000 training and 1,000 test images. Training accuracy agrees to 0.01 points (93.63% against 93.64%) and test accuracy differs by 1.75 points (91.25% against 93.00%). Seeds are fixed, so rerunning the script reproduces these figures exactly.
 
 ---
 
@@ -208,7 +208,7 @@ python code/self_supervised_learning/linear_eval.py
 
 **Cat/dog confusion is architecture-agnostic.** Both ResNet-18 and ViT-Tiny identify cat and dog as their dominant failure modes. This reflects genuine visual ambiguity at 32×32 resolution rather than an architectural weakness: the class boundary is inherently hard at this input scale.
 
-**The NumPy CNN is checked against PyTorch.** `compare_implementations.py` trains the NumPy network and a PyTorch copy of the same architecture on the same data and reports the differences in accuracy and loss.
+**The NumPy CNN tracks PyTorch.** Trained side by side on the same data, the NumPy network and its PyTorch copy finish within 0.01 points on training accuracy and 1.75 points on test accuracy. Their final training losses differ more (0.251 against 0.212), and the two frameworks start from different random weights, so this agreement supports the hand-written gradients without proving them. A finite-difference gradient check on each layer would be the direct test.
 
 ---
 
